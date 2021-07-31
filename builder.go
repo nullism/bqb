@@ -8,12 +8,22 @@ import (
 const (
 	PGSQL   = "postgres"
 	MYSQL   = "mysql"
+	RAW     = "raw"
 	paramPh = "xX_PARAM_Xx"
 )
 
 type Expr struct {
 	F string
 	V []interface{}
+}
+
+func Valf(expr string, vals ...interface{}) Expr {
+	expr = strings.ReplaceAll(expr, "?", paramPh)
+	e := Expr{
+		F: expr,
+		V: vals,
+	}
+	return e
 }
 
 func getExprs(exprs []interface{}) []Expr {
@@ -31,12 +41,8 @@ func intfToExpr(intf interface{}) Expr {
 		expr = Expr{F: v}
 	case Expr:
 		expr = v
-	case []string:
-		expr = Expr{F: strings.Join(v, " ")}
-	case int:
-		expr = Expr{F: fmt.Sprintf("%v", v)}
 	default:
-		expr = Expr{F: "UNKNOWN"}
+		panic(fmt.Sprintf("Unsupported expression type: %T", v))
 	}
 	return expr
 }
@@ -166,18 +172,21 @@ func (q *Query) toSql(dialect string) (string, []interface{}, error) {
 
 	fmt.Printf("param count %d\n", len(params))
 
-	for i := range params {
-		sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+	for i, p := range params {
+		if dialect == RAW {
+			switch v := p.(type) {
+			case int:
+				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
+			default:
+				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
+			}
+		} else if dialect == MYSQL {
+			sql = strings.Replace(sql, paramPh, "?", 1)
+		} else if dialect == PGSQL {
+			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+		}
+
 	}
 
 	return sql, params, nil
-}
-
-func Valf(expr string, vals ...interface{}) Expr {
-	expr = strings.ReplaceAll(expr, "?", paramPh)
-	e := Expr{
-		F: expr,
-		V: vals,
-	}
-	return e
 }

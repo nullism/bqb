@@ -46,7 +46,7 @@ func rawApi() {
 		},
 	}
 	q.O = 2
-	q.Print("postgres")
+	q.Print(bqb.PGSQL)
 }
 
 func complexQuery() {
@@ -55,7 +55,7 @@ func complexQuery() {
 		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
-		Join("users u ON t.id = u.id").
+		Join(bqb.Valf("users u ON t.id = ?", 7)).
 		Where(
 			bqb.Valf("ST_Distance(t.geom, ot.geom) < ?", 101),
 			bqb.Valf("t.name LIKE ?", "william%"),
@@ -71,7 +71,7 @@ func complexQuery() {
 		Having(bqb.Valf("COUNT(t.name) > ?", 2)).
 		Having(bqb.Valf("COUNT(ot.name) > ?", 5))
 
-	q.Print("postgres")
+	q.Print(bqb.PGSQL)
 }
 
 func main() {
@@ -80,7 +80,7 @@ func main() {
 	complexQuery()
 
 	q1 := &bqb.Query{}
-	q1.Select("hi").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
-	q1.Print("postgres")
+	q1.Select("t.name", "*").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
+	q1.Print(bqb.RAW)
 
 }

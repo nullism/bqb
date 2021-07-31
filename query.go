@@ -76,6 +76,11 @@ func (q *Query) ToPsql() (string, []interface{}, error) {
 	return sql, params, err
 }
 
+func (q *Query) ToRaw() (string, error) {
+	sql, _, err := q.toSql(RAW)
+	return sql, err
+}
+
 func (q *Query) Print(dialect string) {
 	var sql string
 	var params []interface{}
@@ -83,8 +88,16 @@ func (q *Query) Print(dialect string) {
 
 	if dialect == PGSQL {
 		sql, params, err = q.ToPsql()
+	} else if dialect == RAW {
+		sql, err = q.ToRaw()
 	} else {
 		sql, params, err = q.ToSql()
 	}
-	fmt.Printf("SQL: %v\nPARAMS: %v\nERROR: %v\n", sql, params, err)
+	fmt.Printf("SQL: %v\n", sql)
+	if len(params) > 0 {
+		fmt.Printf("PARAMS: %v\n", params)
+	}
+	if err != nil {
+		fmt.Printf("ERROR: %v\n", err)
+	}
 }
