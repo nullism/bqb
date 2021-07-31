@@ -111,7 +111,7 @@ Produces
 
 ```sql
 SELECT * FROM patrons WHERE
-    (drivers_license IS NOT NULL AND age > 20 AND age < 60)
+    (drivers_license IS NOT NULL AND (age > 20 AND age < 60))
     OR
     (drivers_license IS NULL AND age >= 60)
     OR
