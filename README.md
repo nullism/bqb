@@ -33,7 +33,7 @@ PARAMS: [%@yahoo.com]
 
 ```golang
 q := bqb.New(bqb.PGSQL).
-    Select("uuidv3_generate() as uuid", "u.id", "u.name", "u.age", "e.email").
+    Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
     From("users u").
     Join("emails e ON e.user_id = u.id").
     Where(
@@ -56,7 +56,7 @@ q := bqb.New(bqb.PGSQL).
 Produces
 
 ```sql
-SELECT uuidv3_generate() as uuid, u.id, u.name, u.age, e.email
+SELECT uuidv3_generate() as uuid, u.id, UPPER(u.name) as screamname, u.age, e.email
 FROM users u JOIN emails e ON e.user_id = u.id
 WHERE (u.id IN ($1, $2, $3) AND e.email LIKE $4)
 OR (u.id IN ($5, $6, $7) AND e.email LIKE $8)
