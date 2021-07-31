@@ -46,12 +46,11 @@ func rawApi() {
 		},
 	}
 	q.O = 2
-	q.Print(bqb.PGSQL)
+	q.Print()
 }
 
 func complexQuery() {
-	q := &bqb.Query{}
-	q = q.
+	q := bqb.New(bqb.PGSQL).
 		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
@@ -71,7 +70,7 @@ func complexQuery() {
 		Having(bqb.Valf("COUNT(t.name) > ?", 2)).
 		Having(bqb.Valf("COUNT(ot.name) > ?", 5))
 
-	q.Print(bqb.PGSQL)
+	q.Print()
 }
 
 func main() {
@@ -79,8 +78,7 @@ func main() {
 	// rawApi()
 	complexQuery()
 
-	q1 := &bqb.Query{}
-	q1.Select("t.name", "*").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
-	q1.Print(bqb.RAW)
+	q := bqb.New(bqb.MYSQL).Select("t.name", "*").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
+	q.Print()
 
 }

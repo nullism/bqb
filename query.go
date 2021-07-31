@@ -3,15 +3,20 @@ package bqb
 import "fmt"
 
 type Query struct {
-	SE []Expr
-	FE []Expr
-	JE []Expr
-	W  [][]Expr
-	OB []Expr
-	L  int
-	O  int
-	GB []Expr
-	H  [][]Expr
+	dialect string
+	SE      []Expr
+	FE      []Expr
+	JE      []Expr
+	W       [][]Expr
+	OB      []Expr
+	L       int
+	O       int
+	GB      []Expr
+	H       [][]Expr
+}
+
+func New(dialect string) *Query {
+	return &Query{dialect: dialect}
 }
 
 func (q *Query) Select(exprs ...interface{}) *Query {
@@ -81,11 +86,11 @@ func (q *Query) ToRaw() (string, error) {
 	return sql, err
 }
 
-func (q *Query) Print(dialect string) {
+func (q *Query) Print() {
 	var sql string
 	var params []interface{}
 	var err error
-
+	dialect := q.dialect
 	if dialect == PGSQL {
 		sql, params, err = q.ToPsql()
 	} else if dialect == RAW {
