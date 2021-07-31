@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/nullism/bqb"
 )
 
 func rawApi() {
 	q := bqb.Query{
 		SE: []bqb.Expr{{F: "*, t.name, t.id"}},
-		F:  "my_table t",
-		J:  []string{"my_other_tab ot ON ot.id = t.id"},
+		FE: []bqb.Expr{{F: "my_table t"}},
+		JE: []bqb.Expr{{F: "my_other_tab ot ON ot.id = t.id"}},
 		W: [][]bqb.Expr{
 			{
 				{
@@ -36,8 +34,8 @@ func rawApi() {
 			},
 		},
 		L:  10,
-		GB: "t.name",
-		OB: "t.name DESC, ot.name ASC",
+		GB: []bqb.Expr{{F: "t.name"}},
+		OB: []bqb.Expr{{F: "t.name DESC, ot.name ASC"}},
 		H: [][]bqb.Expr{
 			{
 				{
@@ -48,10 +46,7 @@ func rawApi() {
 		},
 	}
 	q.O = 2
-
-	sql, params, _ := q.ToPsql()
-	println(sql)
-	println(fmt.Sprintf("%v %T", params, params))
+	q.Print("postgres")
 }
 
 func complexQuery() {
@@ -76,26 +71,16 @@ func complexQuery() {
 		Having(bqb.Valf("COUNT(t.name) > ?", 2)).
 		Having(bqb.Valf("COUNT(ot.name) > ?", 5))
 
-	sql, params, _ := q.ToPsql()
-	println(sql)
-	println(fmt.Sprintf("%v %T", params, params))
+	q.Print("postgres")
 }
 
 func main() {
 
 	// rawApi()
-	// complexQuery()
+	complexQuery()
 
-	println("======================")
-	q3 := &bqb.Query{}
-	q3 = q3.Select("name, id").From("my_table t").
-		Where(bqb.Valf("COUNT(name) > ?", 123)).
-		Where(bqb.Valf("name LIKE ? OR name LIKE ?", "william%", "betty%")).
-		Having(bqb.Valf("COUNT(name) > ?", 111))
-
-	sql, params, _ := q3.ToPsql()
-
-	println(sql)
-	println(fmt.Sprintf("%v %T", params, params))
+	q1 := &bqb.Query{}
+	q1.Select("hi").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
+	q1.Print("postgres")
 
 }
