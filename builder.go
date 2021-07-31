@@ -55,7 +55,6 @@ func exprGroup(exprs [][]Expr) (string, []interface{}) {
 			sql += "("
 			for n, expr := range group {
 				sql += fmt.Sprintf("%v", expr.F)
-				println(fmt.Sprintf("%v %T", expr.V, expr.V))
 				params = append(params, expr.V...)
 				if n+1 < len(group) {
 					sql += " AND "
@@ -118,7 +117,6 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 		sql += strings.Join(tables, ", ")
 		sql += " "
 	}
-	fmt.Printf("param count is %d\n", len(params))
 
 	if len(q.W) > 0 {
 		sql += "WHERE "
@@ -169,8 +167,6 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 	if q.L != 0 {
 		sql += fmt.Sprintf("LIMIT %d ", q.L)
 	}
-
-	fmt.Printf("param count %d\n", len(params))
 
 	for i, p := range params {
 		if q.dialect == RAW {

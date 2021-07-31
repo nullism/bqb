@@ -76,9 +76,23 @@ func complexQuery() {
 func main() {
 
 	// rawApi()
-	complexQuery()
+	// complexQuery()
 
-	q := bqb.New(bqb.MYSQL).Select("t.name", "*").From("table1 t").Where(bqb.Valf("t.name LIKE ?", "william%"))
+	q := bqb.New(bqb.PGSQL).
+		Select("uuidv3_generate() as uuid", "u.id", "u.name", "u.age", "e.email").
+		From("users u").
+		Join("emails e ON e.user_id = u.id").
+		Where(
+			bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
+			bqb.Valf("e.email LIKE ?", "%@gmail.com"),
+		).
+		Where(
+			bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
+			bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
+		).
+		OrderBy("u.age DESC").
+		Limit(10)
+
 	q.Print()
 
 }
