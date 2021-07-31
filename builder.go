@@ -18,12 +18,64 @@ type Expr struct {
 }
 
 func Valf(expr string, vals ...interface{}) Expr {
-	expr = strings.ReplaceAll(expr, "?", paramPh)
-	e := Expr{
-		F: expr,
-		V: vals,
+	var params []interface{}
+
+	for _, val := range vals {
+		switch v := val.(type) {
+		case []int:
+			iparts := []string{}
+			for _, intf := range v {
+				iparts = append(iparts, paramPh)
+				params = append(params, intf)
+			}
+			newPart := strings.Join(iparts, ", ")
+			expr = strings.Replace(expr, "?", newPart, 1)
+		case []string:
+			iparts := []string{}
+			for _, intf := range v {
+				iparts = append(iparts, paramPh)
+				params = append(params, intf)
+			}
+			newPart := strings.Join(iparts, ", ")
+			expr = strings.Replace(expr, "?", newPart, 1)
+		case []interface{}:
+			iparts := []string{}
+			for _, intf := range v {
+				iparts = append(iparts, paramPh)
+				params = append(params, intf)
+			}
+			newPart := strings.Join(iparts, ", ")
+			expr = strings.Replace(expr, "?", newPart, 1)
+		default:
+			expr = strings.Replace(expr, "?", paramPh, 1)
+			params = append(params, v)
+		}
 	}
-	return e
+
+	if strings.Contains(expr, "?") {
+		panic(fmt.Sprintf("mismatched paramters for Valf: %v", expr))
+	}
+
+	return Expr{
+		F: expr,
+		V: params,
+	}
+	// newExpr := strings.ReplaceAll(expr, "?", paramPh)
+	// var newVals []interface{}
+	// for _, val := range vals {
+	// 	switch v := val.(type) {
+	// 	case []interface{}:
+
+	// 	default:
+	// 		newVals = append(newVals, v)
+	// 	}
+	// }
+	// e := Expr{
+	// 	F: expr,
+	// 	V: vals,
+	// }
+
+	// return e
 }
 
 func getExprs(exprs []interface{}) []Expr {

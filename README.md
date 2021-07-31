@@ -33,10 +33,7 @@ PARAMS: [%@yahoo.com]
 
 ```golang
 q := bqb.New(bqb.PGSQL).
-    Select(
-        "uuidv3_generate() as uuid", "u.id",
-        "UPPER(u.name) as bigname", "u.age", "e.email",
-    ).
+    Select("uuidv3_generate() as uuid", "u.id", "u.name", "u.age", "e.email").
     From("users u").
     Join("emails e ON e.user_id = u.id").
     Where(
@@ -47,6 +44,9 @@ q := bqb.New(bqb.PGSQL).
         bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
         bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
     ).
+    Where(
+        bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+    ).
     OrderBy("u.age DESC").
     Limit(10)
 
@@ -55,13 +55,13 @@ q := bqb.New(bqb.PGSQL).
 Produces
 
 ```sql
-SELECT uuidv3_generate() as uid, u.id, UPPER(u.name) as bigname, u.age, e.email
-FROM users u
-JOIN emails e ON e.user_id = u.id
+SELECT uuidv3_generate() as uuid, u.id, u.name, u.age, e.email
+FROM users u JOIN emails e ON e.user_id = u.id
 WHERE (u.id IN ($1, $2, $3) AND e.email LIKE $4)
 OR (u.id IN ($5, $6, $7) AND e.email LIKE $8)
+OR (u.id IN ($9, $10, $11, $12, $13, $14))
 ORDER BY u.age DESC LIMIT 10
 ```
 ```
-PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com]
+PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
 ```

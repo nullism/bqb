@@ -90,6 +90,9 @@ func main() {
 			bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
 			bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
 		).
+		Where(
+			bqb.Valf("u.id IN (?)", []int{1, 2, 3, 4, 5, 6}),
+		).
 		OrderBy("u.age DESC").
 		Limit(10)
 
