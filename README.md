@@ -67,15 +67,8 @@ q := bqb.New(bqb.PGSQL).
     From("users u").
     Join("emails e ON e.user_id = u.id").
     Where(
-        bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
-        bqb.Valf("e.email LIKE ?", "%@gmail.com"),
-    ).
-    Where(
-        bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
-        bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
-    ).
-    Where(
-        // you can pass arrays for IN / ANY clauses
+        bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 1, 3, 5, "%@gmail.com"),
+        bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 2, 4, 6, "%@hotmail.com"),
         bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
     ).
     OrderBy("u.age DESC").
@@ -108,8 +101,8 @@ For example:
 ```golang
 bqb.New(bqb.PGSQL).Select("*").From("patrons").
     Where(
-        "(drivers_license IS NOT NULL AND (age > 20 AND age < 60))",
-        "(drivers_license IS NULL AND age > 60)",
+        "drivers_license IS NOT NULL AND (age > 20 AND age < 60)",
+        "drivers_license IS NULL AND age >= 60",
         "is_known = true",
     )
 ```
@@ -120,7 +113,7 @@ Produces
 SELECT * FROM patrons WHERE
     (drivers_license IS NOT NULL AND age > 20 AND age < 60)
     OR
-    (drivers_license IS NULL AND age > 60)
+    (drivers_license IS NULL AND age >= 60)
     OR
     (is_known = true)
 ```

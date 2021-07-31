@@ -12,51 +12,6 @@ func basic() {
 	q.Print()
 }
 
-func rawApi() {
-	q := bqb.Query{
-		SE: []bqb.Expr{{F: "*, t.name, t.id"}},
-		FE: []bqb.Expr{{F: "my_table t"}},
-		JE: []bqb.Expr{{F: "my_other_tab ot ON ot.id = t.id"}},
-		W: [][]bqb.Expr{
-			{
-				{
-					F: "ST_Distance(geom, ?) < ?",
-					V: []interface{}{"foo", 23},
-				},
-				{
-					F: "t.count < ?",
-					V: []interface{}{1000},
-				},
-			},
-			{
-				{
-					F: "ST_Dwithin(geom, GeomFromEWKT(?))",
-					V: []interface{}{"SRID=4326;POINT(44 -111)"},
-				},
-			},
-			{
-				{
-					F: "t.id IN (SELECT id FROM other_table WHERE id like t.id AND count > ?)",
-					V: []interface{}{23},
-				},
-			},
-		},
-		L:  10,
-		GB: []bqb.Expr{{F: "t.name"}},
-		OB: []bqb.Expr{{F: "t.name DESC, ot.name ASC"}},
-		H: [][]bqb.Expr{
-			{
-				{
-					F: "COUNT(t.name) > ?",
-					V: []interface{}{1},
-				},
-			},
-		},
-	}
-	q.O = 2
-	q.Print()
-}
-
 func complexQuery() {
 	q := bqb.New(bqb.PGSQL).
 		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
@@ -80,11 +35,26 @@ func complexQuery() {
 	q.Print()
 }
 
+func join() {
+	q := bqb.New(bqb.PGSQL).
+		Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
+		From("users u").
+		Join("emails e ON e.user_id = u.id").
+		Where(
+			bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 1, 3, 5, "%@gmail.com"),
+			bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 2, 4, 6, "%@hotmail.com"),
+			bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+		).
+		OrderBy("u.age DESC").
+		Limit(10)
+	q.Print()
+}
+
 func andOr() {
 	q := bqb.New(bqb.PGSQL).Select("*").From("patrons").
 		Where(
-			"(drivers_license IS NOT NULL AND (age > 20 AND age < 60))",
-			"(drivers_license IS NULL AND age > 60)",
+			"drivers_license IS NOT NULL AND (age > 20 AND age < 60)",
+			"drivers_license IS NULL AND age >= 60",
 			"is_known = true",
 		)
 	q.Print()
@@ -105,7 +75,7 @@ func valf() {
 
 func main() {
 
-	// rawApi()
+	// join()
 	// complexQuery()
 	andOr()
 	// basic()

@@ -166,10 +166,11 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 		clauses := []string{}
 		for _, s := range q.WH {
 			expr := intfToExpr(s)
+
 			if len(expr.V) > 0 {
 				params = append(params, expr.V...)
 			}
-			clauses = append(clauses, expr.F)
+			clauses = append(clauses, "("+expr.F+")")
 		}
 		sql += strings.Join(clauses, " OR ")
 		sql += " "
