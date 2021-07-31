@@ -19,6 +19,8 @@ type Expr struct {
 
 func Valf(expr string, vals ...interface{}) Expr {
 	var params []interface{}
+	tmpQ := "1xXX1_Y_2XXx2"
+	newExpr := strings.ReplaceAll(expr, "??", tmpQ)
 
 	for _, val := range vals {
 		switch v := val.(type) {
@@ -29,7 +31,7 @@ func Valf(expr string, vals ...interface{}) Expr {
 				params = append(params, intf)
 			}
 			newPart := strings.Join(iparts, ", ")
-			expr = strings.Replace(expr, "?", newPart, 1)
+			newExpr = strings.Replace(newExpr, "?", newPart, 1)
 		case []string:
 			iparts := []string{}
 			for _, intf := range v {
@@ -37,7 +39,7 @@ func Valf(expr string, vals ...interface{}) Expr {
 				params = append(params, intf)
 			}
 			newPart := strings.Join(iparts, ", ")
-			expr = strings.Replace(expr, "?", newPart, 1)
+			newExpr = strings.Replace(newExpr, "?", newPart, 1)
 		case []interface{}:
 			iparts := []string{}
 			for _, intf := range v {
@@ -45,37 +47,21 @@ func Valf(expr string, vals ...interface{}) Expr {
 				params = append(params, intf)
 			}
 			newPart := strings.Join(iparts, ", ")
-			expr = strings.Replace(expr, "?", newPart, 1)
+			newExpr = strings.Replace(newExpr, "?", newPart, 1)
 		default:
-			expr = strings.Replace(expr, "?", paramPh, 1)
+			newExpr = strings.Replace(newExpr, "?", paramPh, 1)
 			params = append(params, v)
 		}
 	}
 
-	if strings.Contains(expr, "?") {
+	if strings.Contains(newExpr, "?") {
 		panic(fmt.Sprintf("mismatched paramters for Valf: %v", expr))
 	}
 
 	return Expr{
-		F: expr,
+		F: strings.ReplaceAll(newExpr, tmpQ, "?"),
 		V: params,
 	}
-	// newExpr := strings.ReplaceAll(expr, "?", paramPh)
-	// var newVals []interface{}
-	// for _, val := range vals {
-	// 	switch v := val.(type) {
-	// 	case []interface{}:
-
-	// 	default:
-	// 		newVals = append(newVals, v)
-	// 	}
-	// }
-	// e := Expr{
-	// 	F: expr,
-	// 	V: vals,
-	// }
-
-	// return e
 }
 
 func getExprs(exprs []interface{}) []Expr {
@@ -90,6 +76,11 @@ func intfToExpr(intf interface{}) Expr {
 	var expr Expr
 	switch v := intf.(type) {
 	case string:
+		v = strings.ReplaceAll(v, "??", "xXxXy__")
+		if strings.Contains(v, "?") {
+			panic(fmt.Sprintf("String value without parameters: %v", v))
+		}
+		v = strings.ReplaceAll(v, "xXxXy__", "?")
 		expr = Expr{F: v}
 	case Expr:
 		expr = v

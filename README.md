@@ -45,6 +45,7 @@ q := bqb.New(bqb.PGSQL).
         bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
     ).
     Where(
+        // you can pass arrays for IN / ANY clauses
         bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
     ).
     OrderBy("u.age DESC").
@@ -64,4 +65,12 @@ ORDER BY u.age DESC LIMIT 10
 ```
 ```
 PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
+```
+
+### Escaping `?`
+
+Just use `??` instead of `?` in the query, for example:
+
+```golang
+Select("data->>'id' ?? '1234'") ...
 ```
