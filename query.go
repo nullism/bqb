@@ -8,6 +8,7 @@ type Query struct {
 	FE      []Expr
 	JE      []Expr
 	W       [][]Expr
+	WH      []Expr
 	OB      []Expr
 	L       int
 	O       int
@@ -39,7 +40,7 @@ func (q *Query) Join(exprs ...interface{}) *Query {
 
 func (q *Query) Where(exprs ...interface{}) *Query {
 	newExprs := getExprs(exprs)
-	q.W = append(q.W, newExprs)
+	q.WH = append(q.WH, newExprs...)
 	return q
 }
 

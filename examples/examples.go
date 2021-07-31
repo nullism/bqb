@@ -66,17 +66,16 @@ func complexQuery() {
 		Where(
 			bqb.Valf("ST_Distance(t.geom, ot.geom) < ?", 101),
 			bqb.Valf("t.name LIKE ?", "william%"),
-		).
-		Where(
 			bqb.Valf("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 102),
-			"the_fox > the_hound",
 		).
 		Limit(10).
 		Offset(2).
 		OrderBy("t.name ASC, ot.name DESC").
-		GroupBy("t.name").
-		Having(bqb.Valf("COUNT(t.name) > ?", 2)).
-		Having(bqb.Valf("COUNT(ot.name) > ?", 5))
+		GroupBy("t.name", "t.id").
+		Having(
+			bqb.Valf("COUNT(t.name) > ?", 2),
+			bqb.Valf("COUNT(ot.name) > ?", 5),
+		)
 
 	q.Print()
 }
@@ -84,15 +83,8 @@ func complexQuery() {
 func andOr() {
 	q := bqb.New(bqb.PGSQL).Select("*").From("patrons").
 		Where(
-			"drivers_license IS NOT NULL",
-			"age > 20",
-			"age < 60",
-		).
-		Where(
-			"drivers_license IS NULL",
-			"age > 60",
-		).
-		Where(
+			"(drivers_license IS NOT NULL AND (age > 20 AND age < 60))",
+			"(drivers_license IS NULL AND age > 60)",
 			"is_known = true",
 		)
 	q.Print()
@@ -115,8 +107,17 @@ func main() {
 
 	// rawApi()
 	// complexQuery()
-	// andOr()
+	andOr()
 	// basic()
-	valf()
+	// valf()
+
+	q := bqb.New(bqb.PGSQL).
+		Select("*").From("users").Where(
+		bqb.Valf(
+			"(name LIKE ? AND age < ?) OR (name LIKE ? AND (age > ? AND email LIKE ?)",
+			"smith%", 20, "barb%", 22, "%@gmail.com",
+		),
+	)
+	q.Print()
 
 }

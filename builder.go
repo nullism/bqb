@@ -161,11 +161,18 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 		sql += " "
 	}
 
-	if len(q.W) > 0 {
+	if len(q.WH) > 0 {
 		sql += "WHERE "
-		gsql, p := exprGroup(q.W)
-		sql += gsql
-		params = append(params, p...)
+		clauses := []string{}
+		for _, s := range q.WH {
+			expr := intfToExpr(s)
+			if len(expr.V) > 0 {
+				params = append(params, expr.V...)
+			}
+			clauses = append(clauses, expr.F)
+		}
+		sql += strings.Join(clauses, " OR ")
+		sql += " "
 	}
 
 	if len(q.GB) > 0 {
