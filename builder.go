@@ -71,7 +71,7 @@ func exprGroup(exprs [][]Expr) (string, []interface{}) {
 	return sql, params
 }
 
-func (q *Query) toSql(dialect string) (string, []interface{}, error) {
+func (q *Query) ToSql() (string, []interface{}, error) {
 
 	sql := ""
 	var params []interface{}
@@ -173,16 +173,16 @@ func (q *Query) toSql(dialect string) (string, []interface{}, error) {
 	fmt.Printf("param count %d\n", len(params))
 
 	for i, p := range params {
-		if dialect == RAW {
+		if q.dialect == RAW {
 			switch v := p.(type) {
 			case int:
 				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
 			default:
 				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
 			}
-		} else if dialect == MYSQL {
+		} else if q.dialect == MYSQL {
 			sql = strings.Replace(sql, paramPh, "?", 1)
-		} else if dialect == PGSQL {
+		} else if q.dialect == PGSQL {
 			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
 		}
 

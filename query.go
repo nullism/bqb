@@ -71,33 +71,8 @@ func (q *Query) OrderBy(exprs ...interface{}) *Query {
 	return q
 }
 
-func (q *Query) ToSql() (string, []interface{}, error) {
-	sql, params, err := q.toSql(MYSQL)
-	return sql, params, err
-}
-
-func (q *Query) ToPsql() (string, []interface{}, error) {
-	sql, params, err := q.toSql(PGSQL)
-	return sql, params, err
-}
-
-func (q *Query) ToRaw() (string, error) {
-	sql, _, err := q.toSql(RAW)
-	return sql, err
-}
-
 func (q *Query) Print() {
-	var sql string
-	var params []interface{}
-	var err error
-	dialect := q.dialect
-	if dialect == PGSQL {
-		sql, params, err = q.ToPsql()
-	} else if dialect == RAW {
-		sql, err = q.ToRaw()
-	} else {
-		sql, params, err = q.ToSql()
-	}
+	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	if len(params) > 0 {
 		fmt.Printf("PARAMS: %v\n", params)
