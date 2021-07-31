@@ -100,26 +100,18 @@ PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
 ### And / Or
 
 And are or have been simplified to a great deal in `bqb`.
+Separate clauses are assumed to be joined with `OR`.
 
-And queries are applied to everything within the same `Where`, and Or queries
-are assumed for consequtive `Where` clauses.
 
 For example:
 
 ```golang
 bqb.New(bqb.PGSQL).Select("*").From("patrons").
-Where(
-    "drivers_license IS NOT NULL",
-    "age > 20",
-    "age < 60",
-).
-Where(
-    "drivers_license IS NULL",
-    "age > 60",
-).
-Where(
-    "is_known = true",
-)
+    Where(
+        "(drivers_license IS NOT NULL AND (age > 20 AND age < 60))",
+        "(drivers_license IS NULL AND age > 60)",
+        "is_known = true",
+    )
 ```
 
 Produces
