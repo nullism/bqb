@@ -4,6 +4,13 @@ Basic Query Builder
 This project aims to provide a very lightweight and easy to use Query Builder
 that provides an unescaped-first paradigm.
 
+## Why?
+
+* `bqb` does not require you to learn special syntax for operators
+* `bqb` makes `and`/`or` grouping simple to understand
+* `bqb` is very small, and quite fast
+
+
 ## Examples
 
 ```golang
@@ -65,6 +72,42 @@ ORDER BY u.age DESC LIMIT 10
 ```
 ```
 PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
+```
+
+### And / Or
+
+And are or have been simplified to a great deal in `bqb`.
+
+And queries are applied to everything within the same `Where`, and Or queries
+are assumed for consequtive `Where` clauses.
+
+For example:
+
+```golang
+bqb.New(bqb.PGSQL).Select("*").From("patrons").
+Where(
+    "drivers_license IS NOT NULL",
+    "age > 20",
+    "age < 60",
+).
+Where(
+    "drivers_license IS NULL",
+    "age > 60",
+).
+Where(
+    "is_known = true",
+)
+```
+
+Produces
+
+```sql
+SELECT * FROM patrons WHERE
+    (drivers_license IS NOT NULL AND age > 20 AND age < 60)
+    OR
+    (drivers_license IS NULL AND age > 60)
+    OR
+    (is_known = true)
 ```
 
 ### Escaping `?`

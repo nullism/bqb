@@ -73,29 +73,28 @@ func complexQuery() {
 	q.Print()
 }
 
+func andOr() {
+	q := bqb.New(bqb.PGSQL).Select("*").From("patrons").
+		Where(
+			"drivers_license IS NOT NULL",
+			"age > 20",
+			"age < 60",
+		).
+		Where(
+			"drivers_license IS NULL",
+			"age > 60",
+		).
+		Where(
+			"is_known = true",
+		)
+	q.Print()
+}
+
 func main() {
 
 	// rawApi()
 	// complexQuery()
 
-	q := bqb.New(bqb.PGSQL).
-		Select("uuidv3_generate() as uuid", "u.id", "u.name", "u.age", "e.email").
-		From("users u").
-		Join("emails e ON e.user_id = u.id").
-		Where(
-			bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
-			bqb.Valf("e.email LIKE ?", "%@gmail.com"),
-		).
-		Where(
-			bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
-			bqb.Valf("e.email LIKE ?", "%@hotmail.com"),
-		).
-		Where(
-			bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
-		).
-		OrderBy("u.age DESC").
-		Limit(10)
-
-	q.Print()
+	andOr()
 
 }
