@@ -11,8 +11,9 @@ type Expr struct {
 }
 
 type Query struct {
-	S  string
+	SE []Expr
 	F  string
+	FE []Expr
 	J  []string
 	W  [][]Expr
 	OB string

@@ -6,12 +6,11 @@ import (
 	"github.com/nullism/bqb"
 )
 
-func main() {
-
+func rawApi() {
 	q := bqb.Query{
-		S: "*, t.name, t.id",
-		F: "my_table t",
-		J: []string{"my_other_tab ot ON ot.id = t.id"},
+		SE: []bqb.Expr{{F: "*, t.name, t.id"}},
+		F:  "my_table t",
+		J:  []string{"my_other_tab ot ON ot.id = t.id"},
 		W: [][]bqb.Expr{
 			{
 				{
@@ -48,26 +47,27 @@ func main() {
 			},
 		},
 	}
-
 	q.O = 2
 
 	sql, params, _ := q.ToPsql()
-
 	println(sql)
 	println(fmt.Sprintf("%v %T", params, params))
+}
 
-	q2 := &bqb.Query{}
-	q2 = q2.
-		Select("t.name, t.id").
+func complexQuery() {
+	q := &bqb.Query{}
+	q = q.
+		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
 		Join("users u ON t.id = u.id").
 		Where(
-			bqb.Valf("ST_Distance(t.geom, ot.geom) < ?", 1000),
-			bqb.Valf("t.name LIKE ?", "william %"),
+			bqb.Valf("ST_Distance(t.geom, ot.geom) < ?", 101),
+			bqb.Valf("t.name LIKE ?", "william%"),
 		).
 		Where(
-			bqb.Valf("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 1000),
+			bqb.Valf("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 102),
+			"the_fox > the_hound",
 		).
 		Limit(10).
 		Offset(2).
@@ -76,7 +76,24 @@ func main() {
 		Having(bqb.Valf("COUNT(t.name) > ?", 2)).
 		Having(bqb.Valf("COUNT(ot.name) > ?", 5))
 
-	sql, params, _ = q2.ToPsql()
+	sql, params, _ := q.ToPsql()
+	println(sql)
+	println(fmt.Sprintf("%v %T", params, params))
+}
+
+func main() {
+
+	// rawApi()
+	// complexQuery()
+
+	println("======================")
+	q3 := &bqb.Query{}
+	q3 = q3.Select("name, id").From("my_table t").
+		Where(bqb.Valf("COUNT(name) > ?", 123)).
+		Where(bqb.Valf("name LIKE ? OR name LIKE ?", "william%", "betty%")).
+		Having(bqb.Valf("COUNT(name) > ?", 111))
+
+	sql, params, _ := q3.ToPsql()
 
 	println(sql)
 	println(fmt.Sprintf("%v %T", params, params))
