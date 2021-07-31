@@ -22,18 +22,41 @@ import "github.com/nullism/bqb"
 
 ```golang
 q := bqb.New(bqb.PGSQL).
-    Select("id", "name", "email").
+    Select("id, name, email").
     From("users").
     Where("email LIKE '%@yahoo.com'")
+sql, params, err := q.ToSql()
 ```
 
 Produces
 
 ```sql
-SELECT id, name, email FROM users WHERE (email LIKE $1)
+SELECT id, name, email FROM users WHERE (email LIKE '%@yahoo.com')
+```
+
+### Bind Variables
+
+Often times user-provided information is used to generate queries.
+In this case, you should _always_ wrap those values in the `Valf()` function.
+
+```golang
+email := "foo@bar.com"
+password := "p4ssw0rd"
+q := bqb.New(bqb.PGSQL).
+    Select("*").
+    From("users").
+    Where(
+        bqb.Valf("email = ?", email),
+        bqb.Valf("password = ?", password),
+    )
+```
+
+Produces
+```sql
+SELECT * FROM users WHERE (email = $1 AND password = $2)
 ```
 ```
-PARAMS: [%@yahoo.com]
+PARAMS: [foo@bar.com p4ssw0rd]
 ```
 
 ### Select With Join

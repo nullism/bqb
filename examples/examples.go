@@ -4,6 +4,14 @@ import (
 	"github.com/nullism/bqb"
 )
 
+func basic() {
+	q := bqb.New(bqb.PGSQL).
+		Select("id, name, email").
+		From("users").
+		Where("email LIKE '%@yahoo.com'")
+	q.Print()
+}
+
 func rawApi() {
 	q := bqb.Query{
 		SE: []bqb.Expr{{F: "*, t.name, t.id"}},
@@ -90,11 +98,25 @@ func andOr() {
 	q.Print()
 }
 
+func valf() {
+	email := "foo@bar.com"
+	password := "p4ssw0rd"
+	q := bqb.New(bqb.PGSQL).
+		Select("*").
+		From("users").
+		Where(
+			bqb.Valf("email = ?", email),
+			bqb.Valf("password = ?", password),
+		)
+	q.Print()
+}
+
 func main() {
 
 	// rawApi()
 	// complexQuery()
-
-	andOr()
+	// andOr()
+	// basic()
+	valf()
 
 }
