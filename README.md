@@ -117,7 +117,7 @@ bqb.QueryPsql().Select("*").From("patrons").
         bqb.Or(
             bqb.And(
                 "drivers_license IS NOT NULL",
-                bqb.And("age > 20", "age < 60)"),
+                bqb.And("age > 20", "age < 60"),
             ),
             bqb.And(
                 "drivers_license IS NULL",
