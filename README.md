@@ -18,6 +18,14 @@ that provides an unescaped-first paradigm.
 import "github.com/nullism/bqb"
 ```
 
+Running examples:
+```
+$ go run examples/query/main.go
+...
+$ go run examples/insert/main.go
+...
+```
+
 ### Basic Select
 
 ```golang
