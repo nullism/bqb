@@ -6,10 +6,12 @@ import (
 )
 
 const (
-	PGSQL   = "postgres"
-	MYSQL   = "mysql"
-	RAW     = "raw"
-	paramPh = "xX_PARAM_Xx"
+	PGSQL = "postgres"
+	MYSQL = "mysql"
+	RAW   = "raw"
+	SQL   = "sql"
+
+	paramPh = "{{xX_PARAM_Xx}}"
 )
 
 type Expr struct {

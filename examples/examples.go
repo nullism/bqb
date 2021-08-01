@@ -5,6 +5,7 @@ import (
 )
 
 func basic() {
+	println("\n===[ Basic Query ]===")
 	q := bqb.QueryPsql().
 		Select("id, name, email").
 		From("users").
@@ -13,29 +14,36 @@ func basic() {
 }
 
 func complexQuery() {
+	println("\n===[ Complex Query ]===")
 	q := bqb.QueryPsql().
-		Select("t.name", "t.id", bqb.V("(SELECT * FROM my_t WHERE id=?) as name", 123)).
+		Select(
+			"t.name", "t.id",
+			bqb.V("(SELECT * FROM my_t WHERE id=?) as name", 123),
+		).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
-		Join(bqb.V("users u ON t.id = ?", 7)).
+		Join(bqb.V("users u ON t.id > ?", 7)).
 		Where(
-			bqb.V("ST_Distance(t.geom, ot.geom) < ?", 101),
-			bqb.V("t.name LIKE ?", "william%"),
-			bqb.V("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 102),
+			bqb.Or(
+				bqb.V("ST_Distance(t.geom, ot.geom) < ?", 100),
+				bqb.V("t.name LIKE ?", "william%"),
+				bqb.V("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 100),
+			),
 		).
-		Limit(10).
-		Offset(2).
 		OrderBy("t.name ASC, ot.name DESC").
 		GroupBy("t.name", "t.id").
 		Having(
-			bqb.V("COUNT(t.name) > ?", 2),
-			bqb.V("COUNT(ot.name) > ?", 5),
-		)
+			bqb.V("COUNT(t.name) > ?", 1),
+			bqb.V("COUNT(ot.name) > ?", 1),
+		).
+		Offset(15).
+		Limit(10)
 
 	q.Print()
 }
 
 func join() {
+	println("\n===[ Join Query ]===")
 	q := bqb.QueryPsql().
 		Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
 		From("users u").
@@ -59,12 +67,13 @@ func join() {
 }
 
 func andOr() {
+	println("\n===[ And/Or Query ]===")
 	q := bqb.QueryPsql().Select("*").From("patrons").
 		Where(
 			bqb.Or(
 				bqb.And(
 					"drivers_license IS NOT NULL",
-					bqb.And("age > 20", "age < 60)"),
+					bqb.And("age > 20", "age < 60"),
 				),
 				bqb.And(
 					"drivers_license IS NULL",
@@ -76,7 +85,20 @@ func andOr() {
 	q.Print()
 }
 
-func valf() {
+func raw() {
+	println("\n===[ Raw Dialect Query ]===")
+	q := bqb.QueryRaw().
+		Select("*", bqb.V("my_function(?, ?)", "name", true)).
+		From("my_table").
+		Where(
+			bqb.V("my_value = ?", 1234),
+			bqb.V("my_other_value IS ?", nil),
+		)
+	q.Print()
+}
+
+func v() {
+	println("\n===[ Bind Query ]===")
 	email := "foo@bar.com"
 	password := "p4ssw0rd"
 	q := bqb.QueryPsql().
@@ -93,22 +115,10 @@ func valf() {
 
 func main() {
 
+	basic()
+	v()
 	join()
-	// complexQuery()
+	complexQuery()
 	andOr()
-	// basic()
-	// valf()
-	q := bqb.QueryPsql().Select("*").Where(
-		bqb.And(
-			"1 < 2",
-			bqb.V("3 < ?", 4),
-			bqb.And(
-				bqb.Or(
-					"2 > 1",
-					bqb.V("name LIKE ?", "me%"),
-				),
-			),
-		),
-	)
-	q.Print()
+	raw()
 }

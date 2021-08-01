@@ -7,8 +7,8 @@ that provides an unescaped-first paradigm.
 ## Why?
 
 * `bqb` does not require you to learn special syntax for operators.
-* `bqb` makes `and`/`or` grouping function universally, can be added to any clause.
-* `bqb` is very small, and quite fast.
+* `bqb` makes `and`/`or` grouping function universally, and can be added to any clause.
+* `bqb` is very small and quite fast.
 
 
 ## Examples
@@ -105,7 +105,7 @@ PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
 
 ### And / Or
 
-And are or have been simplified to a great deal in `bqb`.
+And and Or can be used in any clause and not just `Where`. Subselects, `Having`, `OrderBy`, etc are all valid.
 Separate clauses are assumed to be joined with `, ` without an `Or` or `And` call.
 
 

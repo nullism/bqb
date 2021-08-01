@@ -165,12 +165,14 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 	for i, p := range params {
 		if q.dialect == RAW {
 			switch v := p.(type) {
-			case int:
+			case nil:
+				sql = strings.Replace(sql, paramPh, "NULL", 1)
+			case int, bool:
 				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
 			default:
 				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
 			}
-		} else if q.dialect == MYSQL {
+		} else if q.dialect == MYSQL || q.dialect == SQL {
 			sql = strings.Replace(sql, paramPh, "?", 1)
 		} else if q.dialect == PGSQL {
 			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
