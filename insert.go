@@ -6,13 +6,17 @@ import (
 )
 
 type Insert struct {
-	dialect string
-	into    []Expr
-	sel     []Expr
-	from    []Expr
-	cols    []Expr
-	vals    []Expr
-	where   []Expr
+	dialect   string
+	into      []Expr
+	union     []Expr
+	sel       []Expr
+	sel_query *Query
+	from      []Expr
+	cols      []Expr
+	vals      []Expr
+	where     []Expr
+	limit     int
+	offset    int
 }
 
 func InsertPsql() *Insert {
@@ -37,33 +41,26 @@ func (i *Insert) Into(exprs ...interface{}) *Insert {
 	return i
 }
 
-func (i *Insert) Select(exprs ...interface{}) *Insert {
-	newExprs := getExprs(exprs)
-	i.sel = append(i.sel, newExprs...)
-	return i
-}
-
-func (i *Insert) From(exprs ...interface{}) *Insert {
-	newExprs := getExprs(exprs)
-	i.from = append(i.from, newExprs...)
-	return i
-}
-
 func (i *Insert) Cols(exprs ...interface{}) *Insert {
 	newExprs := getExprs(exprs)
 	i.cols = append(i.cols, newExprs...)
 	return i
 }
 
-func (i *Insert) Vals(exprs ...interface{}) *Insert {
+func (i *Insert) Union(exprs ...interface{}) *Insert {
 	newExprs := getExprs(exprs)
-	i.vals = append(i.vals, newExprs...)
+	i.union = append(i.union, newExprs...)
 	return i
 }
 
-func (i *Insert) Where(exprs ...interface{}) *Insert {
+func (i *Insert) Select(q *Query) *Insert {
+	i.sel_query = q
+	return i
+}
+
+func (i *Insert) Vals(exprs ...interface{}) *Insert {
 	newExprs := getExprs(exprs)
-	i.where = append(i.where, newExprs...)
+	i.vals = append(i.vals, newExprs...)
 	return i
 }
 
@@ -98,6 +95,14 @@ func (i *Insert) ToSql() (string, []interface{}, error) {
 		sql += ") "
 	}
 
+	if len(i.union) > 0 {
+		sql += "UNION "
+		nsql, nparams := exprsToSql(i.union)
+		sql += strings.Join(nsql, ", ")
+		params = append(params, nparams...)
+		sql += " "
+	}
+
 	if len(i.vals) > 0 {
 		sql += "("
 		nsql, nparams := exprsToSql(i.vals)
@@ -106,28 +111,13 @@ func (i *Insert) ToSql() (string, []interface{}, error) {
 		sql += ") "
 	}
 
-	if len(i.sel) > 0 {
-		sql += "SELECT "
-		nsql, nparams := exprsToSql(i.sel)
-		sql += strings.Join(nsql, ", ")
-		params = append(params, nparams...)
-		sql += " "
-	}
-
-	if len(i.from) > 0 {
-		sql += "FROM "
-		nsql, nparams := exprsToSql(i.from)
-		sql += strings.Join(nsql, ", ")
-		params = append(params, nparams...)
-		sql += " "
-	}
-
-	if len(i.where) > 0 {
-		sql += "WHERE "
-		nsql, nparams := exprsToSql(i.where)
-		sql += strings.Join(nsql, ", ")
-		params = append(params, nparams...)
-		sql += " "
+	if i.sel_query != nil {
+		qs, qp, err := i.sel_query.ToSql()
+		if err != nil {
+			return "", nil, err
+		}
+		sql += qs
+		params = append(params, qp...)
 	}
 
 	sql = dialectReplace(i.dialect, sql, params)

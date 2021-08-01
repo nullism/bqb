@@ -13,18 +13,38 @@ func basic() {
 	q.Print()
 }
 
-func selects() {
-	println("\n===[ Basic Query ]===")
+func subQuery() {
+	println("\n===[ Imbedded Query ]===")
 	q := bqb.InsertPsql().
 		Into("my_table").
 		Cols("name", "age", "current_time").
-		Select("other_name", "other_age", "other_time").
-		From("other_table").
-		Where(bqb.V("other_age IS NOT ?", nil))
+		Select(
+			bqb.QueryPsql().Select("b_name", "b_age", "b_time").
+				From("b_table").
+				Where(bqb.V("my_age > ?", 20)).
+				Limit(10),
+		)
+	q.Print()
+}
+
+func union() {
+	println("\n===[ Union Select Query ]===")
+	q := bqb.InsertPsql().
+		Into("my_table").
+		Cols("name", "age", "current_time").
+		Union("ALL").
+		Select(
+			bqb.QueryPsql().Select("b_name", "b_age", "b_time").
+				From("b_table").
+				Where(bqb.V("my_age > ?", 20)).
+				Limit(10),
+		)
+
 	q.Print()
 }
 
 func main() {
 	basic()
-	selects()
+	union()
+	subQuery()
 }
