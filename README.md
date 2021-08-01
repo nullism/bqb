@@ -6,9 +6,9 @@ that provides an unescaped-first paradigm.
 
 ## Why?
 
-* `bqb` does not require you to learn special syntax for operators
-* `bqb` makes `and`/`or` grouping simple to understand
-* `bqb` is very small, and quite fast
+* `bqb` does not require you to learn special syntax for operators.
+* `bqb` makes `and`/`or` grouping function universally, can be added to any clause.
+* `bqb` is very small, and quite fast.
 
 
 ## Examples
