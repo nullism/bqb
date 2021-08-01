@@ -18,7 +18,7 @@ func complexQuery() {
 	q := bqb.QueryPsql().
 		Select(
 			"t.name", "t.id",
-			bqb.V("(SELECT * FROM my_t WHERE id=?) as name", 123),
+			bqb.QueryPsql().Select("*").From("names").Where(bqb.V("my_vals > ?", 1)).As("my_data"),
 		).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
@@ -97,6 +97,22 @@ func raw() {
 	q.Print()
 }
 
+func groups() {
+	println("\n===[ Grouped Query ]===")
+	q := bqb.QueryPsql().Group(
+		bqb.QueryPsql().Select(bqb.V("?", "3")),
+		"UNION ALL",
+		bqb.QueryPsql().Select(bqb.V("?", "2")),
+		"UNION",
+		bqb.QueryPsql().Select("abcdefg").From("1").Group(
+			bqb.QueryPsql().Select("x").From("other_table1"),
+			"INTERSECT",
+			bqb.QueryPsql().Select("x").From("other_table2"),
+		),
+	)
+	q.Print()
+}
+
 func v() {
 	println("\n===[ Bind Query ]===")
 	email := "foo@bar.com"
@@ -121,4 +137,5 @@ func main() {
 	complexQuery()
 	andOr()
 	raw()
+	groups()
 }

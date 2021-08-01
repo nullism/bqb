@@ -16,6 +16,8 @@ type Query struct {
 	offset  int
 	groupBy []Expr
 	having  []Expr
+	groups  []Expr
+	as      string
 }
 
 func QueryPsql() *Query {
@@ -32,6 +34,11 @@ func QuerySql() *Query {
 
 func QueryRaw() *Query {
 	return &Query{dialect: RAW}
+}
+
+func (q *Query) Group(exprs ...interface{}) *Query {
+	q.groups = append(q.groups, getExprs(exprs)...)
+	return q
 }
 
 func (q *Query) Select(exprs ...interface{}) *Query {
@@ -86,6 +93,11 @@ func (q *Query) OrderBy(exprs ...interface{}) *Query {
 	return q
 }
 
+func (q *Query) As(name string) *Query {
+	q.as = name
+	return q
+}
+
 func (q *Query) Print() {
 	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
@@ -98,9 +110,13 @@ func (q *Query) Print() {
 }
 
 func (q *Query) ToSql() (string, []interface{}, error) {
+	sql, params, err := q.toSql()
+	return dialectReplace(q.dialect, sql, params), params, err
+}
 
-	sql := ""
+func (q *Query) toSql() (string, []interface{}, error) {
 	var params []interface{}
+	sql := ""
 
 	if len(q.selects) > 0 {
 		sql += "SELECT "
@@ -166,7 +182,19 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 		sql += fmt.Sprintf("LIMIT %d ", q.limit)
 	}
 
-	sql = dialectReplace(q.dialect, sql, params)
+	if len(q.groups) > 0 {
+		sql += "("
+		nsql, nparams := exprsToSql(q.groups)
+		sql += strings.Join(nsql, " ")
+		params = append(params, nparams...)
+		sql += ") "
+	}
 
-	return sql, params, nil
+	if q.as != "" {
+		sql = fmt.Sprintf("(%v) as %v", sql, q.as)
+	}
+
+	// sql = dialectReplace(q.dialect, sql, params)
+
+	return strings.TrimSpace(sql), params, nil
 }

@@ -120,6 +120,12 @@ func getExprs(exprs []interface{}) []Expr {
 func intfToExpr(intf interface{}) Expr {
 	var expr Expr
 	switch v := intf.(type) {
+	case *Query:
+		sql, params, err := v.toSql()
+		if err != nil {
+			panic("Error while parsing sub-query")
+		}
+		expr = Expr{F: sql, V: params}
 	case string:
 		v = strings.ReplaceAll(v, "??", "xXxXy__")
 		if strings.Contains(v, "?") {
@@ -127,6 +133,8 @@ func intfToExpr(intf interface{}) Expr {
 		}
 		v = strings.ReplaceAll(v, "xXxXy__", "?")
 		expr = Expr{F: v}
+	case int:
+		expr = Expr{F: "?", V: []interface{}{v}}
 	case Expr:
 		expr = v
 	default:

@@ -116,5 +116,5 @@ func (i *Insert) ToSql() (string, []interface{}, error) {
 	}
 
 	sql = dialectReplace(i.dialect, sql, params)
-	return sql, params, nil
+	return strings.TrimSpace(sql), params, nil
 }
