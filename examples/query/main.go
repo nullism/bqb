@@ -18,7 +18,11 @@ func complexQuery() {
 	q := bqb.QueryPsql().
 		Select(
 			"t.name", "t.id",
-			bqb.QueryPsql().Select("*").From("names").Where(bqb.V("my_vals > ?", 1)).As("my_data"),
+			bqb.QueryPsql().
+				Select("*").
+				From("names").
+				Where(bqb.V("my_vals > ?", 1)).
+				As("my_data"),
 		).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
