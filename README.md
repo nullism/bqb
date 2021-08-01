@@ -186,7 +186,8 @@ q := bqb.InsertPsql().
 
 Produces
 ```sql
-INSERT INTO my_table (name, age, current_time) SELECT b_name, b_age, b_time FROM b_table WHERE my_age > $1 LIMIT 10
+INSERT INTO my_table (name, age, current_time)
+SELECT b_name, b_age, b_time FROM b_table WHERE my_age > $1 LIMIT 10
 ```
 ```
 PARAMS: [20]
