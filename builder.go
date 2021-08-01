@@ -19,7 +19,7 @@ type Expr struct {
 	V []interface{}
 }
 
-func Group(sep string, exprs ...interface{}) Expr {
+func GroupSep(sep string, exprs ...interface{}) Expr {
 	var newFs []string
 	var newV []interface{}
 	for _, e := range exprs {
@@ -41,11 +41,11 @@ func Group(sep string, exprs ...interface{}) Expr {
 }
 
 func And(exprs ...interface{}) Expr {
-	return Group(" AND ", exprs...)
+	return GroupSep(" AND ", exprs...)
 }
 
 func Or(exprs ...interface{}) Expr {
-	return Group(" OR ", exprs...)
+	return GroupSep(" OR ", exprs...)
 }
 
 func V(expr string, vals ...interface{}) Expr {

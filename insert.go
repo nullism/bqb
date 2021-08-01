@@ -107,7 +107,7 @@ func (i *Insert) ToSql() (string, []interface{}, error) {
 	}
 
 	if i.sel_query != nil {
-		qs, qp, err := i.sel_query.ToSql()
+		qs, qp, err := i.sel_query.toSql()
 		if err != nil {
 			return "", nil, err
 		}

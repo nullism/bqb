@@ -9,6 +9,7 @@ that provides an unescaped-first paradigm.
 * `bqb` does not require you to learn special syntax for operators.
 * `bqb` makes `and`/`or` grouping function universally, and can be added to any clause.
 * `bqb` is very small and quite fast.
+* `bqb` is order-independent. Query components can be added in any order, which prevents side effects with complex query building logic.
 
 
 ## Examples
