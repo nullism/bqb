@@ -26,6 +26,10 @@ func QueryMysql() *Query {
 	return &Query{dialect: MYSQL}
 }
 
+func QuerySql() *Query {
+	return &Query{dialect: SQL}
+}
+
 func QueryRaw() *Query {
 	return &Query{dialect: RAW}
 }
@@ -162,23 +166,7 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 		sql += fmt.Sprintf("LIMIT %d ", q.limit)
 	}
 
-	for i, p := range params {
-		if q.dialect == RAW {
-			switch v := p.(type) {
-			case nil:
-				sql = strings.Replace(sql, paramPh, "NULL", 1)
-			case int, bool:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
-			default:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
-			}
-		} else if q.dialect == MYSQL || q.dialect == SQL {
-			sql = strings.Replace(sql, paramPh, "?", 1)
-		} else if q.dialect == PGSQL {
-			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
-		}
-
-	}
+	sql = dialectReplace(q.dialect, sql, params)
 
 	return sql, params, nil
 }

@@ -157,3 +157,23 @@ func exprGroup(exprs [][]Expr) (string, []interface{}) {
 	}
 	return sql, params
 }
+
+func dialectReplace(dialect string, sql string, params []interface{}) string {
+	for i, param := range params {
+		if dialect == RAW {
+			switch v := param.(type) {
+			case nil:
+				sql = strings.Replace(sql, paramPh, "NULL", 1)
+			case int, bool:
+				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
+			default:
+				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
+			}
+		} else if dialect == MYSQL || dialect == SQL {
+			sql = strings.Replace(sql, paramPh, "?", 1)
+		} else if dialect == PGSQL {
+			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+		}
+	}
+	return sql
+}
