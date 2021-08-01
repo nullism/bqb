@@ -5,7 +5,7 @@ import (
 )
 
 func basic() {
-	q := bqb.New(bqb.PGSQL).
+	q := bqb.QueryPsql().
 		Select("id, name, email").
 		From("users").
 		Where("email LIKE '%@yahoo.com'")
@@ -13,7 +13,7 @@ func basic() {
 }
 
 func complexQuery() {
-	q := bqb.New(bqb.PGSQL).
+	q := bqb.QueryPsql().
 		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
@@ -36,7 +36,7 @@ func complexQuery() {
 }
 
 func join() {
-	q := bqb.New(bqb.PGSQL).
+	q := bqb.QueryPsql().
 		Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
 		From("users u").
 		Join("emails e ON e.user_id = u.id").
@@ -51,11 +51,19 @@ func join() {
 }
 
 func andOr() {
-	q := bqb.New(bqb.PGSQL).Select("*").From("patrons").
+	q := bqb.QueryPsql().Select("*").From("patrons").
 		Where(
-			"drivers_license IS NOT NULL AND (age > 20 AND age < 60)",
-			"drivers_license IS NULL AND age >= 60",
-			"is_known = true",
+			bqb.Or(
+				bqb.And(
+					"drivers_license IS NOT NULL",
+					bqb.And("age > 20", "age < 60)"),
+				),
+				bqb.And(
+					"drivers_license IS NULL",
+					"age >= 60",
+				),
+				"is_known = true",
+			),
 		)
 	q.Print()
 }
@@ -63,12 +71,14 @@ func andOr() {
 func valf() {
 	email := "foo@bar.com"
 	password := "p4ssw0rd"
-	q := bqb.New(bqb.PGSQL).
+	q := bqb.QueryPsql().
 		Select("*").
 		From("users").
 		Where(
-			bqb.Valf("email = ?", email),
-			bqb.Valf("password = ?", password),
+			bqb.And(
+				bqb.Valf("email = ?", email),
+				bqb.Valf("password = ?", password),
+			),
 		)
 	q.Print()
 }
@@ -80,14 +90,17 @@ func main() {
 	andOr()
 	// basic()
 	// valf()
-
-	q := bqb.New(bqb.PGSQL).
-		Select("*").From("users").Where(
-		bqb.Valf(
-			"(name LIKE ? AND age < ?) OR (name LIKE ? AND (age > ? AND email LIKE ?)",
-			"smith%", 20, "barb%", 22, "%@gmail.com",
+	q := bqb.QueryPsql().Select("*").Where(
+		bqb.And(
+			"1 < 2",
+			bqb.Valf("3 < ?", 4),
+			bqb.And(
+				bqb.Or(
+					"2 > 1",
+					bqb.Valf("name LIKE ?", "me%"),
+				),
+			),
 		),
 	)
 	q.Print()
-
 }

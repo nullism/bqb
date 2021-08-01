@@ -21,7 +21,7 @@ import "github.com/nullism/bqb"
 ### Basic Select
 
 ```golang
-q := bqb.New(bqb.PGSQL).
+q := bqb.QueryPsql().
     Select("id, name, email").
     From("users").
     Where("email LIKE '%@yahoo.com'")
@@ -42,7 +42,7 @@ In this case, you should _always_ wrap those values in the `Valf()` function.
 ```golang
 email := "foo@bar.com"
 password := "p4ssw0rd"
-q := bqb.New(bqb.PGSQL).
+q := bqb.QueryPsql().
     Select("*").
     From("users").
     Where(
@@ -62,7 +62,7 @@ PARAMS: [foo@bar.com p4ssw0rd]
 ### Select With Join
 
 ```golang
-q := bqb.New(bqb.PGSQL).
+q := bqb.QueryPsql().
     Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
     From("users u").
     Join("emails e ON e.user_id = u.id").
@@ -73,7 +73,6 @@ q := bqb.New(bqb.PGSQL).
     ).
     OrderBy("u.age DESC").
     Limit(10)
-
 ```
 
 Produces
@@ -93,29 +92,41 @@ PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
 ### And / Or
 
 And are or have been simplified to a great deal in `bqb`.
-Separate clauses are assumed to be joined with `OR`.
+Separate clauses are assumed to be joined with `, ` without an `Or` or `And` call.
 
 
 For example:
 
 ```golang
-bqb.New(bqb.PGSQL).Select("*").From("patrons").
+bqb.QueryPsql().Select("*").From("patrons").
     Where(
-        "drivers_license IS NOT NULL AND (age > 20 AND age < 60)",
-        "drivers_license IS NULL AND age >= 60",
-        "is_known = true",
+        bqb.Or(
+            bqb.And(
+                "drivers_license IS NOT NULL",
+                bqb.And("age > 20", "age < 60)"),
+            ),
+            bqb.And(
+                "drivers_license IS NULL",
+                "age >= 60",
+            ),
+            "is_known = true",
+        ),
     )
 ```
 
 Produces
 
 ```sql
-SELECT * FROM patrons WHERE
-    (drivers_license IS NOT NULL AND (age > 20 AND age < 60))
-    OR
-    (drivers_license IS NULL AND age >= 60)
-    OR
-    (is_known = true)
+SELECT * FROM patrons WHERE (
+    (
+        drivers_license IS NOT NULL AND (
+            age > 20 AND age < 60
+        )
+    )
+    ) OR (
+    drivers_license IS NULL AND age >= 60
+    ) OR is_known = true
+)
 ```
 
 ### Escaping `?`

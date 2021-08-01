@@ -17,6 +17,35 @@ type Expr struct {
 	V []interface{}
 }
 
+func Group(sep string, exprs ...interface{}) Expr {
+	var newFs []string
+	var newV []interface{}
+	for _, e := range exprs {
+		expr := intfToExpr(e)
+		newFs = append(newFs, expr.F)
+		newV = append(newV, expr.V...)
+	}
+	pre := ""
+	post := ""
+	if len(exprs) > 1 {
+		pre = "("
+		post = ")"
+	}
+	newF := pre + strings.Join(newFs, sep) + post
+	return Expr{
+		F: newF,
+		V: newV,
+	}
+}
+
+func And(exprs ...interface{}) Expr {
+	return Group(" AND ", exprs...)
+}
+
+func Or(exprs ...interface{}) Expr {
+	return Group(" OR ", exprs...)
+}
+
 func Valf(expr string, vals ...interface{}) Expr {
 	var params []interface{}
 	tmpQ := "1xXX1_Y_2XXx2"
@@ -62,6 +91,20 @@ func Valf(expr string, vals ...interface{}) Expr {
 		F: strings.ReplaceAll(newExpr, tmpQ, "?"),
 		V: params,
 	}
+}
+
+func exprsToSql(exprs []Expr) ([]string, []interface{}) {
+	qs := []string{}
+	var newP []interface{}
+
+	for _, s := range exprs {
+		expr := intfToExpr(s)
+		if len(expr.V) > 0 {
+			newP = append(newP, expr.V...)
+		}
+		qs = append(qs, expr.F)
+	}
+	return qs, newP
 }
 
 func getExprs(exprs []interface{}) []Expr {
@@ -111,129 +154,4 @@ func exprGroup(exprs [][]Expr) (string, []interface{}) {
 		}
 	}
 	return sql, params
-}
-
-func (q *Query) ToSql() (string, []interface{}, error) {
-
-	sql := ""
-	var params []interface{}
-
-	if len(q.SE) > 0 {
-		sql += "SELECT "
-		sels := []string{}
-		for _, s := range q.SE {
-			expr := intfToExpr(s)
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-
-			}
-			sels = append(sels, expr.F)
-		}
-		sql += strings.Join(sels, ", ")
-		sql += " "
-	}
-
-	if len(q.FE) > 0 {
-		sql += "FROM "
-		tables := []string{}
-		for _, s := range q.FE {
-			expr := intfToExpr(s)
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-			}
-			tables = append(tables, expr.F)
-		}
-		sql += strings.Join(tables, ", ")
-		sql += " "
-	}
-
-	if len(q.JE) > 0 {
-		sql += "JOIN "
-		tables := []string{}
-		for _, s := range q.JE {
-			expr := intfToExpr(s)
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-			}
-			tables = append(tables, expr.F)
-		}
-		sql += strings.Join(tables, ", ")
-		sql += " "
-	}
-
-	if len(q.WH) > 0 {
-		sql += "WHERE "
-		clauses := []string{}
-		for _, s := range q.WH {
-			expr := intfToExpr(s)
-
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-			}
-			clauses = append(clauses, "("+expr.F+")")
-		}
-		sql += strings.Join(clauses, " OR ")
-		sql += " "
-	}
-
-	if len(q.GB) > 0 {
-		sql += "GROUP BY "
-		gbs := []string{}
-		for _, s := range q.GB {
-			expr := intfToExpr(s)
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-			}
-			gbs = append(gbs, expr.F)
-		}
-		sql += strings.Join(gbs, ", ")
-		sql += " "
-	}
-
-	if len(q.H) > 0 {
-		sql += "HAVING "
-		hsql, hparams := exprGroup(q.H)
-		sql += hsql
-		params = append(params, hparams...)
-	}
-
-	if len(q.OB) > 0 {
-		sql += "ORDER BY "
-		obs := []string{}
-		for _, s := range q.OB {
-			expr := intfToExpr(s)
-			if len(expr.V) > 0 {
-				params = append(params, expr.V...)
-			}
-			obs = append(obs, expr.F)
-		}
-		sql += strings.Join(obs, ", ")
-		sql += " "
-	}
-
-	if q.O != 0 {
-		sql += fmt.Sprintf("OFFSET %d ", q.O)
-	}
-
-	if q.L != 0 {
-		sql += fmt.Sprintf("LIMIT %d ", q.L)
-	}
-
-	for i, p := range params {
-		if q.dialect == RAW {
-			switch v := p.(type) {
-			case int:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
-			default:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
-			}
-		} else if q.dialect == MYSQL {
-			sql = strings.Replace(sql, paramPh, "?", 1)
-		} else if q.dialect == PGSQL {
-			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
-		}
-
-	}
-
-	return sql, params, nil
 }
