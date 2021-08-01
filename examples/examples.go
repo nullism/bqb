@@ -41,9 +41,17 @@ func join() {
 		From("users u").
 		Join("emails e ON e.user_id = u.id").
 		Where(
-			bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 1, 3, 5, "%@gmail.com"),
-			bqb.Valf("u.id IN (?, ?, ?) AND e.email LIKE ?", 2, 4, 6, "%@hotmail.com"),
-			bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+			bqb.Or(
+				bqb.And(
+					bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
+					bqb.Valf("AND e.email LIKE ?", "%@gmail.com"),
+				),
+				bqb.And(
+					bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
+					bqb.Valf("AND e.email LIKE ?", "%@yahoo.com"),
+				),
+				bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+			),
 		).
 		OrderBy("u.age DESC").
 		Limit(10)
@@ -85,7 +93,7 @@ func valf() {
 
 func main() {
 
-	// join()
+	join()
 	// complexQuery()
 	andOr()
 	// basic()
