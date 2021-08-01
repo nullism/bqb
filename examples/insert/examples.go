@@ -5,7 +5,7 @@ import (
 )
 
 func basic() {
-	println("\n===[ Basic Query ]===")
+	println("\n===[ Basic Insert ]===")
 	q := bqb.InsertPsql().
 		Into("my_table").
 		Cols("name", "age", "current_time").
@@ -19,7 +19,8 @@ func subQuery() {
 		Into("my_table").
 		Cols("name", "age", "current_time").
 		Select(
-			bqb.QueryPsql().Select("b_name", "b_age", "b_time").
+			bqb.QueryPsql().
+				Select("b_name", "b_age", "b_time").
 				From("b_table").
 				Where(bqb.V("my_age > ?", 20)).
 				Limit(10),

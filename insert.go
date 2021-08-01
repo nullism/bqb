@@ -9,14 +9,9 @@ type Insert struct {
 	dialect   string
 	into      []Expr
 	union     []Expr
-	sel       []Expr
 	sel_query *Query
-	from      []Expr
 	cols      []Expr
 	vals      []Expr
-	where     []Expr
-	limit     int
-	offset    int
 }
 
 func InsertPsql() *Insert {

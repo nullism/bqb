@@ -143,6 +143,47 @@ SELECT * FROM patrons WHERE (
 )
 ```
 
+### Basic Insert
+
+```golang
+q := bqb.InsertPsql().
+    Into("my_table").
+    Cols("name", "age", "current_time").
+    Vals(bqb.V("?, ?, ?", "someone", 42, "2021-01-01 01:01:01Z"))
+```
+
+Produces
+```sql
+INSERT INTO my_table (name, age, current_time) ($1, $2, $3)
+```
+```
+PARAMS: [someone 42 2021-01-01 01:01:01Z]
+```
+
+
+### Insert .. Select
+
+```golang
+q := bqb.InsertPsql().
+    Into("my_table").
+    Cols("name", "age", "current_time").
+    Select(
+        bqb.QueryPsql().
+            Select("b_name", "b_age", "b_time").
+            From("b_table").
+            Where(bqb.V("my_age > ?", 20)).
+            Limit(10),
+    )
+```
+
+Produces
+```sql
+INSERT INTO my_table (name, age, current_time) SELECT b_name, b_age, b_time FROM b_table WHERE my_age > $1 LIMIT 10
+```
+```
+PARAMS: [20]
+```
+
 ### Escaping `?`
 
 Just use `??` instead of `?` in the query, for example:
