@@ -14,22 +14,22 @@ func basic() {
 
 func complexQuery() {
 	q := bqb.QueryPsql().
-		Select("t.name", "t.id", bqb.Valf("(SELECT * FROM my_t WHERE id=?) as name", 123)).
+		Select("t.name", "t.id", bqb.V("(SELECT * FROM my_t WHERE id=?) as name", 123)).
 		From("my_table t").
 		Join("my_other_table ot ON t.id = ot.id").
-		Join(bqb.Valf("users u ON t.id = ?", 7)).
+		Join(bqb.V("users u ON t.id = ?", 7)).
 		Where(
-			bqb.Valf("ST_Distance(t.geom, ot.geom) < ?", 101),
-			bqb.Valf("t.name LIKE ?", "william%"),
-			bqb.Valf("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 102),
+			bqb.V("ST_Distance(t.geom, ot.geom) < ?", 101),
+			bqb.V("t.name LIKE ?", "william%"),
+			bqb.V("ST_Distance(t.geom, GeomFromEWKT(?)) < ?", "SRID=4326;POINT(44 -111)", 102),
 		).
 		Limit(10).
 		Offset(2).
 		OrderBy("t.name ASC, ot.name DESC").
 		GroupBy("t.name", "t.id").
 		Having(
-			bqb.Valf("COUNT(t.name) > ?", 2),
-			bqb.Valf("COUNT(ot.name) > ?", 5),
+			bqb.V("COUNT(t.name) > ?", 2),
+			bqb.V("COUNT(ot.name) > ?", 5),
 		)
 
 	q.Print()
@@ -43,14 +43,14 @@ func join() {
 		Where(
 			bqb.Or(
 				bqb.And(
-					bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
-					bqb.Valf("AND e.email LIKE ?", "%@gmail.com"),
+					bqb.V("u.id IN (?, ?, ?)", 1, 3, 5),
+					bqb.V("AND e.email LIKE ?", "%@gmail.com"),
 				),
 				bqb.And(
-					bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
-					bqb.Valf("AND e.email LIKE ?", "%@yahoo.com"),
+					bqb.V("u.id IN (?, ?, ?)", 2, 4, 6),
+					bqb.V("AND e.email LIKE ?", "%@yahoo.com"),
 				),
-				bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+				bqb.V("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
 			),
 		).
 		OrderBy("u.age DESC").
@@ -84,8 +84,8 @@ func valf() {
 		From("users").
 		Where(
 			bqb.And(
-				bqb.Valf("email = ?", email),
-				bqb.Valf("password = ?", password),
+				bqb.V("email = ?", email),
+				bqb.V("password = ?", password),
 			),
 		)
 	q.Print()
@@ -101,11 +101,11 @@ func main() {
 	q := bqb.QueryPsql().Select("*").Where(
 		bqb.And(
 			"1 < 2",
-			bqb.Valf("3 < ?", 4),
+			bqb.V("3 < ?", 4),
 			bqb.And(
 				bqb.Or(
 					"2 > 1",
-					bqb.Valf("name LIKE ?", "me%"),
+					bqb.V("name LIKE ?", "me%"),
 				),
 			),
 		),

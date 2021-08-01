@@ -46,7 +46,7 @@ func Or(exprs ...interface{}) Expr {
 	return Group(" OR ", exprs...)
 }
 
-func Valf(expr string, vals ...interface{}) Expr {
+func V(expr string, vals ...interface{}) Expr {
 	var params []interface{}
 	tmpQ := "1xXX1_Y_2XXx2"
 	newExpr := strings.ReplaceAll(expr, "??", tmpQ)

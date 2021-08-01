@@ -37,7 +37,7 @@ SELECT id, name, email FROM users WHERE (email LIKE '%@yahoo.com')
 ### Bind Variables
 
 Often times user-provided information is used to generate queries.
-In this case, you should _always_ wrap those values in the `Valf()` function.
+In this case, you should _always_ wrap those values in the `V()` function.
 
 ```golang
 email := "foo@bar.com"
@@ -47,8 +47,8 @@ q := bqb.QueryPsql().
     From("users").
     Where(
         bqb.And(
-            bqb.Valf("email = ?", email),
-            bqb.Valf("password = ?", password),
+            bqb.V("email = ?", email),
+            bqb.V("password = ?", password),
         ),
     )
 ```
@@ -71,14 +71,14 @@ q := bqb.QueryPsql().
     Where(
         bqb.Or(
             bqb.And(
-                bqb.Valf("u.id IN (?, ?, ?)", 1, 3, 5),
-                bqb.Valf("e.email LIKE ?", "%@gmail.com"),
+                bqb.V("u.id IN (?, ?, ?)", 1, 3, 5),
+                bqb.V("e.email LIKE ?", "%@gmail.com"),
             ),
             bqb.And(
-                bqb.Valf("u.id IN (?, ?, ?)", 2, 4, 6),
-                bqb.Valf("e.email LIKE ?", "%@yahoo.com"),
+                bqb.V("u.id IN (?, ?, ?)", 2, 4, 6),
+                bqb.V("e.email LIKE ?", "%@yahoo.com"),
             ),
-            bqb.Valf("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
+            bqb.V("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
         ),
     ).
     OrderBy("u.age DESC").
