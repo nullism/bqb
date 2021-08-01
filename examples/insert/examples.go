@@ -14,7 +14,7 @@ func basic() {
 }
 
 func subQuery() {
-	println("\n===[ Imbedded Query ]===")
+	println("\n===[ Insert Select Query ]===")
 	q := bqb.InsertPsql().
 		Into("my_table").
 		Cols("name", "age", "current_time").
