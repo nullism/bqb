@@ -73,10 +73,14 @@ PARAMS: [foo@bar.com p4ssw0rd]
 ### Select With Join
 
 ```golang
-q := bqb.QueryPsql().
+bqb.QueryPsql().
     Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
     From("users u").
     Join("emails e ON e.user_id = u.id").
+    JoinType(
+        "LEFT OUTER JOIN",
+        "friends f ON f.user_id = u.id",
+    ).
     Where(
         bqb.Or(
             bqb.And(
@@ -99,14 +103,16 @@ Produces
 ```sql
 SELECT uuidv3_generate() as uuid, u.id, UPPER(u.name) as screamname, u.age, e.email
 FROM users u
-JOIN emails e ON e.user_id = u.id
+    JOIN emails e ON e.user_id = u.id
+    LEFT OUTER JOIN friends f ON f.user_id = u.id
 WHERE (
     (u.id IN ($1, $2, $3) AND e.email LIKE $4)
     OR
     (u.id IN ($5, $6, $7) AND e.email LIKE $8)
     OR
     u.id IN ($9, $10, $11, $12, $13, $14)
-) ORDER BY u.age DESC LIMIT 10
+)
+ORDER BY u.age DESC LIMIT 10
 ```
 ```
 PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]

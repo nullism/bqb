@@ -25,8 +25,10 @@ func complexQuery() {
 				As("my_data"),
 		).
 		From("my_table t").
-		Join("my_other_table ot ON t.id = ot.id").
-		Join(bqb.V("users u ON t.id > ?", 7)).
+		Join(
+			"my_other_table ot ON t.id = ot.id",
+			bqb.V("users u ON t.id > ?", 7),
+		).
 		Where(
 			bqb.Or(
 				bqb.V("ST_Distance(t.geom, ot.geom) < ?", 100),
@@ -52,15 +54,19 @@ func join() {
 		Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
 		From("users u").
 		Join("emails e ON e.user_id = u.id").
+		JoinType(
+			"LEFT OUTER JOIN",
+			"friends f ON f.user_id = u.id",
+		).
 		Where(
 			bqb.Or(
 				bqb.And(
 					bqb.V("u.id IN (?, ?, ?)", 1, 3, 5),
-					bqb.V("AND e.email LIKE ?", "%@gmail.com"),
+					bqb.V("e.email LIKE ?", "%@gmail.com"),
 				),
 				bqb.And(
 					bqb.V("u.id IN (?, ?, ?)", 2, 4, 6),
-					bqb.V("AND e.email LIKE ?", "%@yahoo.com"),
+					bqb.V("e.email LIKE ?", "%@yahoo.com"),
 				),
 				bqb.V("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
 			),
@@ -108,7 +114,9 @@ func groups() {
 		"UNION ALL",
 		bqb.QueryPsql().Select(bqb.V("?", "2")),
 		"UNION",
-		bqb.QueryPsql().Select("abcdefg").From("1").Group(
+		bqb.QueryPsql().Select("abcdefg").From("1"),
+		"UNION",
+		bqb.QueryPsql().Group(
 			bqb.QueryPsql().Select("x").From("other_table1"),
 			"INTERSECT",
 			bqb.QueryPsql().Select("x").From("other_table2"),

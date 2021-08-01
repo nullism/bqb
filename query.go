@@ -10,6 +10,7 @@ type Query struct {
 	selects []Expr
 	from    []Expr
 	join    []Expr
+	joins   []join
 	where   []Expr
 	order   []Expr
 	limit   int
@@ -18,6 +19,11 @@ type Query struct {
 	having  []Expr
 	groups  []Expr
 	as      string
+}
+
+type join struct {
+	kind string
+	expr Expr
 }
 
 func QueryPsql() *Query {
@@ -54,8 +60,18 @@ func (q *Query) From(exprs ...interface{}) *Query {
 }
 
 func (q *Query) Join(exprs ...interface{}) *Query {
-	newExprs := getExprs(exprs)
-	q.join = append(q.join, newExprs...)
+	// newExprs := getExprs(exprs)
+	// q.join = append(q.join, newExprs...)
+	q.JoinType("JOIN", exprs...)
+	return q
+}
+
+func (q *Query) JoinType(kind string, exprs ...interface{}) *Query {
+	for _, expr := range exprs {
+		q.joins = append(
+			q.joins, join{kind: kind, expr: intfToExpr(expr)},
+		)
+	}
 	return q
 }
 
@@ -134,12 +150,13 @@ func (q *Query) toSql() (string, []interface{}, error) {
 		sql += " "
 	}
 
-	if len(q.join) > 0 {
-		sql += "JOIN "
-		nsql, nparams := exprsToSql(q.join)
-		sql += strings.Join(nsql, ", ")
-		params = append(params, nparams...)
-		sql += " "
+	if len(q.joins) > 0 {
+		for _, join := range q.joins {
+			sql += join.kind + " "
+			sql += join.expr.F
+			params = append(params, join.expr.V...)
+			sql += " "
+		}
 	}
 
 	if len(q.where) > 0 {
