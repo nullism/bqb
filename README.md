@@ -301,10 +301,10 @@ CREATE TABLE my_table (
 Subqueries are also possible in `CreateTable`
 
 ```golang
-CreateTable("new_table").
+bqb.CreateTable("new_table").
     Cols("a INT NOT NULL DEFAULT 1", "b VARCHAR(50) NOT NULL").
     Select(
-        Select("a", "b").From("other_table").Where("a IS NOT NULL"),
+        bqb.Select("a", "b").From("other_table").Where("a IS NOT NULL"),
     )
 ```
 
