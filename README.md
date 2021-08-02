@@ -322,13 +322,16 @@ This applies to the pointer instead of creating a copy for two reasons:
 ```golang
 q := bqb.Insert("my_table").Cols("a").Vals("a")
 for _, k := range []string{"b", "c", "d"} {
-    q.Vals(k).Cols(k)
+    q.Vals(bqb.V("?", k)).Cols(k)
 }
 ```
 
 Produces
 ```sql
-INSERT INTO my_table (a, b, c, d) VALUES (a, b, c, d)
+INSERT INTO my_table (a, b, c, d) VALUES (a, ?, ?, ?)
+```
+```
+PARAMS: [b c d]
 ```
 
 ### Escaping `?`
