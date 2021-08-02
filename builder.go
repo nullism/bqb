@@ -126,7 +126,7 @@ func getExprs(exprs []interface{}) []Expr {
 func intfToExpr(intf interface{}) Expr {
 	var expr Expr
 	switch v := intf.(type) {
-	case *Query:
+	case *select_:
 		sql, params, err := v.toSql()
 		if err != nil {
 			panic("Error while parsing sub-query")

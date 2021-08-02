@@ -9,7 +9,7 @@ type Insert struct {
 	dialect   string
 	into      []Expr
 	union     []Expr
-	sel_query *Query
+	sel_query *select_
 	cols      []Expr
 	vals      []Expr
 }
@@ -48,7 +48,7 @@ func (i *Insert) Union(exprs ...interface{}) *Insert {
 	return i
 }
 
-func (i *Insert) Select(q *Query) *Insert {
+func (i *Insert) Select(q *select_) *Insert {
 	i.sel_query = q
 	return i
 }

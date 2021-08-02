@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type Query struct {
+type select_ struct {
 	dialect string
 	selects []Expr
 	from    []Expr
@@ -27,55 +27,55 @@ type join struct {
 	expr Expr
 }
 
-func Select(exprs ...interface{}) *Query {
-	q := &Query{
+func Select(exprs ...interface{}) *select_ {
+	q := &select_{
 		dialect: SQL,
 		selects: getExprs(exprs),
 	}
 	return q
 }
 
-func QueryPsql() *Query {
-	return &Query{dialect: PGSQL}
+func QueryPsql() *select_ {
+	return &select_{dialect: PGSQL}
 }
 
-func QueryMysql() *Query {
-	return &Query{dialect: MYSQL}
+func QueryMysql() *select_ {
+	return &select_{dialect: MYSQL}
 }
 
-func QuerySql() *Query {
-	return &Query{dialect: SQL}
+func QuerySql() *select_ {
+	return &select_{dialect: SQL}
 }
 
-func QueryRaw() *Query {
-	return &Query{dialect: RAW}
+func QueryRaw() *select_ {
+	return &select_{dialect: RAW}
 }
 
-func (q *Query) Group(exprs ...interface{}) *Query {
+func (q *select_) Group(exprs ...interface{}) *select_ {
 	q.groups = append(q.groups, getExprs(exprs)...)
 	return q
 }
 
-func (q *Query) Select(exprs ...interface{}) *Query {
+func (q *select_) Select(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.selects = append(q.selects, newExprs...)
 	return q
 }
 
-func (q *Query) From(exprs ...interface{}) *Query {
+func (q *select_) From(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.from = append(q.from, newExprs...)
 	return q
 }
 
-func (q *Query) Join(exprs ...interface{}) *Query {
+func (q *select_) Join(exprs ...interface{}) *select_ {
 	// newExprs := getExprs(exprs)
 	// q.join = append(q.join, newExprs...)
 	q.JoinType("JOIN", exprs...)
 	return q
 }
 
-func (q *Query) JoinType(kind string, exprs ...interface{}) *Query {
+func (q *select_) JoinType(kind string, exprs ...interface{}) *select_ {
 	for _, expr := range exprs {
 		q.joins = append(
 			q.joins, join{kind: kind, expr: intfToExpr(expr)},
@@ -84,52 +84,52 @@ func (q *Query) JoinType(kind string, exprs ...interface{}) *Query {
 	return q
 }
 
-func (q *Query) Where(exprs ...interface{}) *Query {
+func (q *select_) Where(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.where = append(q.where, newExprs...)
 	return q
 }
 
-func (q *Query) Limit(limit int) *Query {
+func (q *select_) Limit(limit int) *select_ {
 	q.limit = limit
 	return q
 }
 
-func (q *Query) Offset(offset int) *Query {
+func (q *select_) Offset(offset int) *select_ {
 	q.offset = offset
 	return q
 }
 
-func (q *Query) GroupBy(exprs ...interface{}) *Query {
+func (q *select_) GroupBy(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.groupBy = append(q.groupBy, newExprs...)
 	return q
 }
 
-func (q *Query) Having(exprs ...interface{}) *Query {
+func (q *select_) Having(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.having = append(q.having, newExprs...)
 	return q
 }
 
-func (q *Query) OrderBy(exprs ...interface{}) *Query {
+func (q *select_) OrderBy(exprs ...interface{}) *select_ {
 	newExprs := getExprs(exprs)
 	q.order = append(q.order, newExprs...)
 	return q
 }
 
-func (q *Query) Enclose() *Query {
+func (q *select_) Enclose() *select_ {
 	q.enclose = true
 	return q
 }
 
-func (q *Query) As(name string) *Query {
+func (q *select_) As(name string) *select_ {
 	q.as = name
 	q.enclose = true
 	return q
 }
 
-func (q *Query) Print() {
+func (q *select_) Print() {
 	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	if len(params) > 0 {
@@ -140,12 +140,12 @@ func (q *Query) Print() {
 	}
 }
 
-func (q *Query) ToSql() (string, []interface{}, error) {
+func (q *select_) ToSql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
 	return dialectReplace(q.dialect, sql, params), params, err
 }
 
-func (q *Query) toSql() (string, []interface{}, error) {
+func (q *select_) toSql() (string, []interface{}, error) {
 	var params []interface{}
 	sql := ""
 
