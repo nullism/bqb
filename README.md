@@ -125,7 +125,7 @@ Separate clauses are assumed to be joined with `, ` without an `Or` or `And` cal
 For example:
 
 ```golang
-bqb.QueryPsql().Select("*").From("patrons").
+Select("*").From("patrons").
     Where(
         bqb.Or(
             bqb.And(
@@ -138,7 +138,7 @@ bqb.QueryPsql().Select("*").From("patrons").
             ),
             "is_known = true",
         ),
-    )
+    ).Postgres()
 ```
 
 Produces
@@ -159,10 +159,10 @@ SELECT * FROM patrons WHERE (
 ### Basic Insert
 
 ```golang
-q := bqb.InsertPsql().
-    Into("my_table").
+q := bqb.Insert("my_table").
     Cols("name", "age", "current_time").
-    Vals(bqb.V("?, ?, ?", "someone", 42, "2021-01-01 01:01:01Z"))
+    Vals(bqb.V("?, ?, ?", "someone", 42, "2021-01-01 01:01:01Z")).
+    Postgres()
 ```
 
 Produces
@@ -177,8 +177,7 @@ PARAMS: [someone 42 2021-01-01 01:01:01Z]
 ### Insert .. Select
 
 ```golang
-q := bqb.InsertPsql().
-    Into("my_table").
+q := bqb.Insert("my_table").
     Cols("name", "age", "current_time").
     Select(
         bqb.QueryPsql().
@@ -186,7 +185,7 @@ q := bqb.InsertPsql().
             From("b_table").
             Where(bqb.V("my_age > ?", 20)).
             Limit(10),
-    )
+    ).Postgres()
 ```
 
 Produces
@@ -242,8 +241,7 @@ nameQ := bqb.QueryPsql().
     From("users").
     Where(bqb.V("name LIKE ?", "%allister"))
 
-bqb.UpdatePsql().
-    Update("my_table").
+bqb.Update("my_table").
     Set(
         bqb.V("name = ?", "McCallister"),
         "age = 20",
@@ -257,7 +255,7 @@ bqb.UpdatePsql().
             "name IN ",
             nameQ.Enclose(),
         ),
-    )
+    ).Postgres()
 ```
 
 Produces
@@ -275,19 +273,46 @@ PARAMS: [McCallister %allister]
 ### Using Text Queries
 
 Sometimes it's easier to read inline queries than it
-is to add another `bqb.QueryPsql()` to an existing query.
+is to add another `bqb.Select()` to an existing query.
 In these instances there's nothing wrong with writing an inline query as follows:
 
 ```golang
-bqb.QueryPsql().
-    Select(
+bqb.Select(
         "age as my_age",
         "(SELECT id FROM id_list WHERE user='me') as my_id",
     ).
 ...
 ```
 
+### Create Table / Indexes
 
+```golang
+bqb.CreateTable("my_table").Cols("a VARCHAR(50) NOT NULL", "b BOOLEAN DEFAULT false")
+```
+
+Produces
+```sql
+CREATE TABLE my_table (
+    a VARCHAR(50) NOT NULL,
+    b BOOLEAN DEFAULT false
+)
+```
+
+Subqueries are also possible in `CreateTable`
+
+```golang
+CreateTable("new_table").
+    Cols("a INT NOT NULL DEFAULT 1", "b VARCHAR(50) NOT NULL").
+    Select(
+        Select("a", "b").From("other_table").Where("a IS NOT NULL"),
+    )
+```
+
+Produces
+```sql
+CREATE TABLE new_table AS
+SELECT a, b FROM other_table WHERE a IS NOT NULL
+```
 
 ### Escaping `?`
 

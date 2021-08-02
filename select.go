@@ -5,11 +5,10 @@ import (
 	"strings"
 )
 
-type select_ struct {
+type selectQ struct {
 	dialect string
 	selects []Expr
 	from    []Expr
-	join    []Expr
 	joins   []join
 	where   []Expr
 	order   []Expr
@@ -27,60 +26,58 @@ type join struct {
 	expr Expr
 }
 
-func Select(exprs ...interface{}) *select_ {
-	q := &select_{
+func Select(exprs ...interface{}) *selectQ {
+	q := &selectQ{
 		dialect: SQL,
 		selects: getExprs(exprs),
 	}
 	return q
 }
 
-func (s *select_) Postgres() *select_ {
+func (s *selectQ) Postgres() *selectQ {
 	s.dialect = PGSQL
 	return s
 }
 
-func QueryPsql() *select_ {
-	return &select_{dialect: PGSQL}
+func (s *selectQ) Mysql() *selectQ {
+	s.dialect = MYSQL
+	return s
 }
 
-func QueryMysql() *select_ {
-	return &select_{dialect: MYSQL}
+func (s *selectQ) Raw() *selectQ {
+	s.dialect = RAW
+	return s
 }
 
-func QuerySql() *select_ {
-	return &select_{dialect: SQL}
+func QueryPsql() *selectQ {
+	return &selectQ{dialect: PGSQL}
 }
 
-func QueryRaw() *select_ {
-	return &select_{dialect: RAW}
-}
-
-func (q *select_) Group(exprs ...interface{}) *select_ {
+func (q *selectQ) Group(exprs ...interface{}) *selectQ {
 	q.groups = append(q.groups, getExprs(exprs)...)
 	return q
 }
 
-func (q *select_) Select(exprs ...interface{}) *select_ {
+func (q *selectQ) Select(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.selects = append(q.selects, newExprs...)
 	return q
 }
 
-func (q *select_) From(exprs ...interface{}) *select_ {
+func (q *selectQ) From(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.from = append(q.from, newExprs...)
 	return q
 }
 
-func (q *select_) Join(exprs ...interface{}) *select_ {
+func (q *selectQ) Join(exprs ...interface{}) *selectQ {
 	// newExprs := getExprs(exprs)
 	// q.join = append(q.join, newExprs...)
 	q.JoinType("JOIN", exprs...)
 	return q
 }
 
-func (q *select_) JoinType(kind string, exprs ...interface{}) *select_ {
+func (q *selectQ) JoinType(kind string, exprs ...interface{}) *selectQ {
 	for _, expr := range exprs {
 		q.joins = append(
 			q.joins, join{kind: kind, expr: intfToExpr(expr)},
@@ -89,52 +86,52 @@ func (q *select_) JoinType(kind string, exprs ...interface{}) *select_ {
 	return q
 }
 
-func (q *select_) Where(exprs ...interface{}) *select_ {
+func (q *selectQ) Where(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.where = append(q.where, newExprs...)
 	return q
 }
 
-func (q *select_) Limit(limit int) *select_ {
+func (q *selectQ) Limit(limit int) *selectQ {
 	q.limit = limit
 	return q
 }
 
-func (q *select_) Offset(offset int) *select_ {
+func (q *selectQ) Offset(offset int) *selectQ {
 	q.offset = offset
 	return q
 }
 
-func (q *select_) GroupBy(exprs ...interface{}) *select_ {
+func (q *selectQ) GroupBy(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.groupBy = append(q.groupBy, newExprs...)
 	return q
 }
 
-func (q *select_) Having(exprs ...interface{}) *select_ {
+func (q *selectQ) Having(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.having = append(q.having, newExprs...)
 	return q
 }
 
-func (q *select_) OrderBy(exprs ...interface{}) *select_ {
+func (q *selectQ) OrderBy(exprs ...interface{}) *selectQ {
 	newExprs := getExprs(exprs)
 	q.order = append(q.order, newExprs...)
 	return q
 }
 
-func (q *select_) Enclose() *select_ {
+func (q *selectQ) Enclose() *selectQ {
 	q.enclose = true
 	return q
 }
 
-func (q *select_) As(name string) *select_ {
+func (q *selectQ) As(name string) *selectQ {
 	q.as = name
 	q.enclose = true
 	return q
 }
 
-func (q *select_) Print() {
+func (q *selectQ) Print() {
 	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	if len(params) > 0 {
@@ -145,12 +142,12 @@ func (q *select_) Print() {
 	}
 }
 
-func (q *select_) ToSql() (string, []interface{}, error) {
+func (q *selectQ) ToSql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
 	return dialectReplace(q.dialect, sql, params), params, err
 }
 
-func (q *select_) toSql() (string, []interface{}, error) {
+func (q *selectQ) toSql() (string, []interface{}, error) {
 	var params []interface{}
 	sql := ""
 

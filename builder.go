@@ -126,7 +126,7 @@ func getExprs(exprs []interface{}) []Expr {
 func intfToExpr(intf interface{}) Expr {
 	var expr Expr
 	switch v := intf.(type) {
-	case *select_:
+	case *selectQ:
 		sql, params, err := v.toSql()
 		if err != nil {
 			panic("Error while parsing sub-query")
@@ -149,40 +149,23 @@ func intfToExpr(intf interface{}) Expr {
 	return expr
 }
 
-func exprGroup(exprs [][]Expr) (string, []interface{}) {
-	var sql string
-	var params []interface{}
-	if len(exprs) > 0 {
-		for i, group := range exprs {
-			sql += "("
-			for n, expr := range group {
-				sql += fmt.Sprintf("%v", expr.F)
-				params = append(params, expr.V...)
-				if n+1 < len(group) {
-					sql += " AND "
-				}
-			}
-			if i+1 == len(exprs) {
-				sql += ") "
-			} else {
-				sql += ") OR "
-			}
-		}
+func paramToRaw(param interface{}) string {
+	switch p := param.(type) {
+	case int:
+		return fmt.Sprintf("%v", p)
+	case string:
+		return fmt.Sprintf("'%v'", p)
+	case nil:
+		return "NULL"
+	default:
+		panic(fmt.Sprintf("cannot conver type %T", p))
 	}
-	return sql, params
 }
 
 func dialectReplace(dialect string, sql string, params []interface{}) string {
 	for i, param := range params {
 		if dialect == RAW {
-			switch v := param.(type) {
-			case nil:
-				sql = strings.Replace(sql, paramPh, "NULL", 1)
-			case int, bool:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("%v", v), 1)
-			default:
-				sql = strings.Replace(sql, paramPh, fmt.Sprintf("'%v'", v), 1)
-			}
+			sql = strings.Replace(sql, paramPh, paramToRaw(param), 1)
 		} else if dialect == MYSQL || dialect == SQL {
 			sql = strings.Replace(sql, paramPh, "?", 1)
 		} else if dialect == PGSQL {

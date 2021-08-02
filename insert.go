@@ -5,61 +5,58 @@ import (
 	"strings"
 )
 
-type Insert struct {
+type insert struct {
 	dialect   string
 	into      []Expr
 	union     []Expr
-	sel_query *select_
+	sel_query *selectQ
 	cols      []Expr
 	vals      []Expr
 }
 
-func InsertPsql() *Insert {
-	return &Insert{dialect: PGSQL}
+func Insert(exprs ...interface{}) *insert {
+	return &insert{dialect: SQL, into: getExprs(exprs)}
 }
 
-func InsertSql() *Insert {
-	return &Insert{dialect: SQL}
-}
-
-func InsertMysql() *Insert {
-	return &Insert{dialect: MYSQL}
-}
-
-func InsertRaw() *Insert {
-	return &Insert{dialect: PGSQL}
-}
-
-func (i *Insert) Into(exprs ...interface{}) *Insert {
-	newExprs := getExprs(exprs)
-	i.into = append(i.into, newExprs...)
+func (i *insert) Postgres() *insert {
+	i.dialect = PGSQL
 	return i
 }
 
-func (i *Insert) Cols(exprs ...interface{}) *Insert {
+func (i *insert) Mysql() *insert {
+	i.dialect = MYSQL
+	return i
+}
+
+func (i *insert) Raw() *insert {
+	i.dialect = RAW
+	return i
+}
+
+func (i *insert) Cols(exprs ...interface{}) *insert {
 	newExprs := getExprs(exprs)
 	i.cols = append(i.cols, newExprs...)
 	return i
 }
 
-func (i *Insert) Union(exprs ...interface{}) *Insert {
+func (i *insert) Union(exprs ...interface{}) *insert {
 	newExprs := getExprs(exprs)
 	i.union = append(i.union, newExprs...)
 	return i
 }
 
-func (i *Insert) Select(q *select_) *Insert {
+func (i *insert) Select(q *selectQ) *insert {
 	i.sel_query = q
 	return i
 }
 
-func (i *Insert) Vals(exprs ...interface{}) *Insert {
+func (i *insert) Vals(exprs ...interface{}) *insert {
 	newExprs := getExprs(exprs)
 	i.vals = append(i.vals, newExprs...)
 	return i
 }
 
-func (i *Insert) Print() {
+func (i *insert) Print() {
 	sql, params, err := i.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	if len(params) > 0 {
@@ -70,7 +67,7 @@ func (i *Insert) Print() {
 	}
 }
 
-func (i *Insert) ToSql() (string, []interface{}, error) {
+func (i *insert) ToSql() (string, []interface{}, error) {
 	sql := "INSERT "
 	var params []interface{}
 
@@ -99,7 +96,7 @@ func (i *Insert) ToSql() (string, []interface{}, error) {
 	}
 
 	if len(i.vals) > 0 {
-		sql += "("
+		sql += "VALUES ("
 		nsql, nparams := exprsToSql(i.vals)
 		sql += strings.Join(nsql, ", ")
 		params = append(params, nparams...)
