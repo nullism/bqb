@@ -80,7 +80,7 @@ func (u *Update) ToSql() (string, []interface{}, error) {
 	if len(u.where) > 0 {
 		sql += "WHERE "
 		nsql, nparams := exprsToSql(u.where)
-		sql += strings.Join(nsql, " ")
+		sql += strings.Join(nsql, ", ")
 		params = append(params, nparams...)
 		sql += " "
 	}

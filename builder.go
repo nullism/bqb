@@ -19,7 +19,7 @@ type Expr struct {
 	V []interface{}
 }
 
-func GroupSep(sep string, exprs ...interface{}) Expr {
+func GroupSep(sep string, enclose bool, exprs ...interface{}) Expr {
 	var newFs []string
 	var newV []interface{}
 	for _, e := range exprs {
@@ -29,7 +29,7 @@ func GroupSep(sep string, exprs ...interface{}) Expr {
 	}
 	pre := ""
 	post := ""
-	if len(exprs) > 1 {
+	if enclose {
 		pre = "("
 		post = ")"
 	}
@@ -40,12 +40,18 @@ func GroupSep(sep string, exprs ...interface{}) Expr {
 	}
 }
 
+func Concat(exprs ...interface{}) Expr {
+	return GroupSep("", false, exprs...)
+}
+
 func And(exprs ...interface{}) Expr {
-	return GroupSep(" AND ", exprs...)
+	enclose := len(exprs) > 1
+	return GroupSep(" AND ", enclose, exprs...)
 }
 
 func Or(exprs ...interface{}) Expr {
-	return GroupSep(" OR ", exprs...)
+	enclose := len(exprs) > 1
+	return GroupSep(" OR ", enclose, exprs...)
 }
 
 func V(expr string, vals ...interface{}) Expr {

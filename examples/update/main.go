@@ -24,12 +24,26 @@ func subquery() {
 		Update("my_table").
 		Set(
 			bqb.V("name = ?", "McCallister"),
-			"age = 20", "current_time = CURRENT_TIMESTAMP()",
+			"age = 20",
+			bqb.Concat(
+				"current_timestamp = ",
+				bqb.QueryPsql().
+					Select("timestamp").
+					From("time_data").
+					Where("is_current = true").
+					Limit(1).
+					Enclose(),
+			),
 		).
 		Where(
-			"name IN (",
-			bqb.QueryPsql().Select("name").From("users").Where("name LIKE '%allister'"),
-			")",
+			bqb.Concat(
+				"name IN ",
+				bqb.QueryPsql().
+					Select("name").
+					From("users").
+					Where(bqb.V("name LIKE ?", "%allister")).
+					Enclose(),
+			),
 		)
 	q.Print()
 }

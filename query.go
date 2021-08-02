@@ -19,6 +19,7 @@ type Query struct {
 	having  []Expr
 	groups  []Expr
 	as      string
+	enclose bool
 }
 
 type join struct {
@@ -109,8 +110,14 @@ func (q *Query) OrderBy(exprs ...interface{}) *Query {
 	return q
 }
 
+func (q *Query) Enclose() *Query {
+	q.enclose = true
+	return q
+}
+
 func (q *Query) As(name string) *Query {
 	q.as = name
+	q.enclose = true
 	return q
 }
 
@@ -207,11 +214,15 @@ func (q *Query) toSql() (string, []interface{}, error) {
 		sql += ") "
 	}
 
-	if q.as != "" {
-		sql = fmt.Sprintf("(%v) as %v", sql, q.as)
+	sql = strings.TrimSpace(sql)
+
+	if q.enclose {
+		sql = fmt.Sprintf("(%v)", sql)
 	}
 
-	// sql = dialectReplace(q.dialect, sql, params)
+	if q.as != "" {
+		sql = fmt.Sprintf("%v as %v", sql, q.as)
+	}
 
-	return strings.TrimSpace(sql), params, nil
+	return sql, params, nil
 }
