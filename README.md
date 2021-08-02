@@ -30,8 +30,7 @@ $ go run examples/insert/main.go
 ### Basic Select
 
 ```golang
-q := bqb.QueryPsql().
-    Select("id, name, email").
+q := bqb.Select("id, name, email").
     From("users").
     Where("email LIKE '%@yahoo.com'")
 sql, params, err := q.ToSql()
@@ -51,15 +50,14 @@ In this case, you should _always_ wrap those values in the `V()` function.
 ```golang
 email := "foo@bar.com"
 password := "p4ssw0rd"
-q := bqb.QueryPsql().
-    Select("*").
+q := bqb.Select("*").
     From("users").
     Where(
         bqb.And(
             bqb.V("email = ?", email),
             bqb.V("password = ?", password),
         ),
-    )
+    ).Postgres()
 ```
 
 Produces
@@ -73,8 +71,7 @@ PARAMS: [foo@bar.com p4ssw0rd]
 ### Select With Join
 
 ```golang
-bqb.QueryPsql().
-    Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
+bqb.Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
     From("users u").
     Join("emails e ON e.user_id = u.id").
     JoinType(
@@ -95,7 +92,8 @@ bqb.QueryPsql().
         ),
     ).
     OrderBy("u.age DESC").
-    Limit(10)
+    Limit(10).
+    Postgres()
 ```
 
 Produces
