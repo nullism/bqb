@@ -180,8 +180,7 @@ PARAMS: [someone 42 2021-01-01 01:01:01Z]
 q := bqb.Insert("my_table").
     Cols("name", "age", "current_time").
     Select(
-        bqb.QueryPsql().
-            Select("b_name", "b_age", "b_time").
+        bqb.Select("b_name", "b_age", "b_time").
             From("b_table").
             Where(bqb.V("my_age > ?", 20)).
             Limit(10),
