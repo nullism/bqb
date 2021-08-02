@@ -20,6 +20,16 @@ func basic() {
 
 func subquery() {
 	println("\n===[ Advanced Update ]===")
+
+	timeQ := bqb.QueryPsql().Select("timestamp").
+		From("time_data").Where("is_current = true").
+		Limit(1)
+
+	nameQ := bqb.QueryPsql().
+		Select("name").
+		From("users").
+		Where(bqb.V("name LIKE ?", "%allister"))
+
 	q := bqb.UpdatePsql().
 		Update("my_table").
 		Set(
@@ -27,22 +37,13 @@ func subquery() {
 			"age = 20",
 			bqb.Concat(
 				"current_timestamp = ",
-				bqb.QueryPsql().
-					Select("timestamp").
-					From("time_data").
-					Where("is_current = true").
-					Limit(1).
-					Enclose(),
+				timeQ.Enclose(),
 			),
 		).
 		Where(
 			bqb.Concat(
 				"name IN ",
-				bqb.QueryPsql().
-					Select("name").
-					From("users").
-					Where(bqb.V("name LIKE ?", "%allister")).
-					Enclose(),
+				nameQ.Enclose(),
 			),
 		)
 	q.Print()

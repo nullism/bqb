@@ -200,6 +200,79 @@ SELECT b_name, b_age, b_time FROM b_table WHERE my_age > $1 LIMIT 10
 PARAMS: [20]
 ```
 
+### Basic Update
+
+```golang
+bqb.UpdatePsql().
+    Update("my_table").
+    Set(
+        bqb.V("name = ?", "McCallister"),
+        "age = 20", "current_time = CURRENT_TIMESTAMP()",
+    ).
+    Where(
+        bqb.V("name = ?", "Mcallister"),
+    )
+```
+
+Produces
+```sql
+UPDATE my_table SET name = $1, age = 20, current_time = CURRENT_TIMESTAMP()
+WHERE name = $2
+```
+```
+PARAMS: [McCallister Mcallister]
+```
+
+### Update with Sub-Queries
+
+As with all clauses, sub-queries can be written inline as part of the clause or assigned
+to a variable and used that way.
+
+Note that the `Enclose()` method simply wraps the query in parentheses.
+
+The `Concat()` method makes the following expressions join without any separator.
+
+```golang
+timeQ := bqb.QueryPsql().Select("timestamp").
+    From("time_data").Where("is_current = true").
+    Limit(1)
+
+nameQ := bqb.QueryPsql().
+    Select("name").
+    From("users").
+    Where(bqb.V("name LIKE ?", "%allister"))
+
+bqb.UpdatePsql().
+    Update("my_table").
+    Set(
+        bqb.V("name = ?", "McCallister"),
+        "age = 20",
+        bqb.Concat(
+            "current_timestamp = ",
+            timeQ.Enclose(),
+        ),
+    ).
+    Where(
+        bqb.Concat(
+            "name IN ",
+            nameQ.Enclose(),
+        ),
+    )
+```
+
+Produces
+```sql
+UPDATE my_table SET name = $1, age = 20, current_timestamp = (
+    SELECT timestamp FROM time_data WHERE is_current = true LIMIT 1
+) WHERE name IN (
+    SELECT name FROM users WHERE name LIKE $2
+)
+```
+```
+PARAMS: [McCallister %allister]
+```
+
+
 ### Escaping `?`
 
 Just use `??` instead of `?` in the query, for example:
