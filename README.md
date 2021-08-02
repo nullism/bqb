@@ -229,14 +229,12 @@ Note that the `Enclose()` method simply wraps the query in parentheses.
 The `Concat()` method makes the following expressions join without any separator.
 
 ```golang
-timeQ := bqb.QueryPsql().
-    Select("timestamp").
+timeQ := bqb.Select("timestamp").
     From("time_data").
     Where("is_current = true").
     Limit(1)
 
-nameQ := bqb.QueryPsql().
-    Select("name").
+nameQ := bqb.Select("name").
     From("users").
     Where(bqb.V("name LIKE ?", "%allister"))
 
