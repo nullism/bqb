@@ -6,15 +6,14 @@ import (
 
 func basic() {
 	println("\n===[ Basic Update ]===")
-	q := bqb.UpdatePsql().
-		Update("my_table").
+	q := bqb.Update("my_table").
 		Set(
 			bqb.V("name = ?", "McCallister"),
 			"age = 20", "current_time = CURRENT_TIMESTAMP()",
 		).
 		Where(
 			bqb.V("name = ?", "Mcallister"),
-		)
+		).Postgres()
 	q.Print()
 }
 
@@ -22,7 +21,7 @@ func subquery() {
 	println("\n===[ Advanced Update ]===")
 
 	timeQ := bqb.QueryPsql().Select("timestamp").
-		From("time_data").Where("is_current = true").
+		From("time_data").Where(bqb.V("is_current = ?", true)).
 		Limit(1)
 
 	nameQ := bqb.QueryPsql().
@@ -30,8 +29,7 @@ func subquery() {
 		From("users").
 		Where(bqb.V("name LIKE ?", "%allister"))
 
-	q := bqb.UpdatePsql().
-		Update("my_table").
+	q := bqb.Update("my_table").
 		Set(
 			bqb.V("name = ?", "McCallister"),
 			"age = 20",
@@ -45,7 +43,7 @@ func subquery() {
 				"name IN ",
 				nameQ.Enclose(),
 			),
-		)
+		).Postgres()
 	q.Print()
 }
 

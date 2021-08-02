@@ -27,6 +27,14 @@ type join struct {
 	expr Expr
 }
 
+func Select(exprs ...interface{}) *Query {
+	q := &Query{
+		dialect: SQL,
+		selects: getExprs(exprs),
+	}
+	return q
+}
+
 func QueryPsql() *Query {
 	return &Query{dialect: PGSQL}
 }

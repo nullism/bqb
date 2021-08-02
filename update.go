@@ -5,48 +5,60 @@ import (
 	"strings"
 )
 
-type Update struct {
+type update struct {
 	dialect string
 	update  []Expr
 	set     []Expr
 	where   []Expr
 }
 
-func UpdatePsql() *Update {
-	return &Update{dialect: PGSQL}
+func Update(exprs ...interface{}) *update {
+	return &update{
+		dialect: SQL,
+		update:  getExprs(exprs),
+	}
 }
 
-func UpdateSql() *Update {
-	return &Update{dialect: SQL}
+func UpdateSql() *update {
+	return &update{dialect: SQL}
 }
 
-func UpdateMysql() *Update {
-	return &Update{dialect: MYSQL}
+func UpdateMysql() *update {
+	return &update{dialect: MYSQL}
 }
 
-func UpdateRaw() *Update {
-	return &Update{dialect: PGSQL}
+func UpdateRaw() *update {
+	return &update{dialect: PGSQL}
 }
 
-func (u *Update) Update(exprs ...interface{}) *Update {
-	newExprs := getExprs(exprs)
-	u.update = append(u.update, newExprs...)
-	return u
-}
-
-func (u *Update) Set(exprs ...interface{}) *Update {
+func (u *update) Set(exprs ...interface{}) *update {
 	newExprs := getExprs(exprs)
 	u.set = append(u.set, newExprs...)
 	return u
 }
 
-func (u *Update) Where(exprs ...interface{}) *Update {
+func (u *update) Where(exprs ...interface{}) *update {
 	newExprs := getExprs(exprs)
 	u.where = append(u.where, newExprs...)
 	return u
 }
 
-func (u *Update) Print() {
+func (u *update) Postgres() *update {
+	u.dialect = PGSQL
+	return u
+}
+
+func (u *update) Mysql() *update {
+	u.dialect = MYSQL
+	return u
+}
+
+func (u *update) Raw() *update {
+	u.dialect = RAW
+	return u
+}
+
+func (u *update) Print() {
 	sql, params, err := u.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	if len(params) > 0 {
@@ -57,7 +69,7 @@ func (u *Update) Print() {
 	}
 }
 
-func (u *Update) ToSql() (string, []interface{}, error) {
+func (u *update) ToSql() (string, []interface{}, error) {
 	var sql string
 	var params []interface{}
 
