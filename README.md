@@ -125,7 +125,7 @@ Separate clauses are assumed to be joined with `, ` without an `Or` or `And` cal
 For example:
 
 ```golang
-Select("*").From("patrons").
+bqb.Select("*").From("patrons").
     Where(
         bqb.Or(
             bqb.And(
@@ -172,7 +172,6 @@ INSERT INTO my_table (name, age, current_time) ($1, $2, $3)
 ```
 PARAMS: [someone 42 2021-01-01 01:01:01Z]
 ```
-
 
 ### Insert .. Select
 
@@ -309,6 +308,27 @@ Produces
 ```sql
 CREATE TABLE new_table AS
 SELECT a, b FROM other_table WHERE a IS NOT NULL
+```
+
+### Order Independent Query Building
+
+Any query method that accepts `...interface{}` acts as in an _additive_ manner.
+
+This applies to the pointer instead of creating a copy for two reasons:
+
+1. Less overhead than creating struct copies.
+2. Less syntax than having to reassign `q` while building the query.
+
+```golang
+q := bqb.Insert("my_table").Cols("a").Vals("a")
+for _, k := range []string{"b", "c", "d"} {
+    q.Vals(k).Cols(k)
+}
+```
+
+Produces
+```sql
+INSERT INTO my_table (a, b, c, d) VALUES (a, b, c, d)
 ```
 
 ### Escaping `?`
