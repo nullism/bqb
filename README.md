@@ -233,8 +233,10 @@ Note that the `Enclose()` method simply wraps the query in parentheses.
 The `Concat()` method makes the following expressions join without any separator.
 
 ```golang
-timeQ := bqb.QueryPsql().Select("timestamp").
-    From("time_data").Where("is_current = true").
+timeQ := bqb.QueryPsql().
+    Select("timestamp").
+    From("time_data").
+    Where("is_current = true").
     Limit(1)
 
 nameQ := bqb.QueryPsql().
@@ -271,6 +273,22 @@ UPDATE my_table SET name = $1, age = 20, current_timestamp = (
 ```
 PARAMS: [McCallister %allister]
 ```
+
+### Using Text Queries
+
+Sometimes it's easier to read inline queries than it
+is to add another `bqb.QueryPsql()` to an existing query.
+In these instances there's nothing wrong with writing an inline query as follows:
+
+```golang
+bqb.QueryPsql().
+    Select(
+        "age as my_age",
+        "(SELECT id FROM id_list WHERE user='me') as my_id",
+    ).
+...
+```
+
 
 
 ### Escaping `?`
