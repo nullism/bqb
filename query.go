@@ -35,6 +35,11 @@ func Select(exprs ...interface{}) *select_ {
 	return q
 }
 
+func (s *select_) Postgres() *select_ {
+	s.dialect = PGSQL
+	return s
+}
+
 func QueryPsql() *select_ {
 	return &select_{dialect: PGSQL}
 }

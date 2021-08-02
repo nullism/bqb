@@ -50,8 +50,7 @@ func complexQuery() {
 
 func join() {
 	println("\n===[ Join Query ]===")
-	q := bqb.QueryPsql().
-		Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
+	q := bqb.Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
 		From("users u").
 		Join("emails e ON e.user_id = u.id").
 		JoinType(
@@ -72,7 +71,7 @@ func join() {
 			),
 		).
 		OrderBy("u.age DESC").
-		Limit(10)
+		Limit(10).Postgres()
 	q.Print()
 }
 
