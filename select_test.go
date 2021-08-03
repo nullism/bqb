@@ -11,6 +11,15 @@ func TestQuery(t *testing.T) {
 	}
 }
 
+func TestQueryAs(t *testing.T) {
+	q := Select("a", Select("a").From("table_b").As("b_a")).From("table_a")
+	sql, _, _ := q.ToSql()
+	want := "SELECT a, (SELECT a FROM table_b) AS b_a FROM table_a"
+	if sql != want {
+		t.Errorf("want: %q, got: %q", want, sql)
+	}
+}
+
 func TestQueryIn(t *testing.T) {
 	q := Select("a, b").From("table").Where(V("a IN (?)", []int{1, 2, 3}))
 	sql, params, _ := q.ToSql()

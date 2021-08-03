@@ -231,7 +231,7 @@ func (q *selectQ) toSql() (string, []interface{}, error) {
 	}
 
 	if q.as != "" {
-		sql = fmt.Sprintf("%v as %v", sql, q.as)
+		sql = fmt.Sprintf("%v AS %v", sql, q.as)
 	}
 
 	return sql, params, nil
