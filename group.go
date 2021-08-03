@@ -1,6 +1,9 @@
 package bqb
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type group struct {
 	dialect string
@@ -27,6 +30,17 @@ func (g *group) Mysql() *group {
 func (g *group) Raw() *group {
 	g.dialect = RAW
 	return g
+}
+
+func (g *group) Print() {
+	sql, params, err := g.ToSql()
+	fmt.Printf("SQL: %v\n", sql)
+	if len(params) > 0 {
+		fmt.Printf("PARAMS: %v\n", params)
+	}
+	if err != nil {
+		fmt.Printf("ERROR: %v\n", err)
+	}
 }
 
 func (g *group) ToSql() (string, []interface{}, error) {
