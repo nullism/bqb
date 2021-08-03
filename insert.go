@@ -12,6 +12,7 @@ type insert struct {
 	sel_query *selectQ
 	cols      []Expr
 	vals      []Expr
+	onDupKey  []Expr
 }
 
 func Insert(exprs ...interface{}) *insert {
@@ -33,15 +34,13 @@ func (i *insert) Raw() *insert {
 	return i
 }
 
-func (i *insert) Cols(exprs ...interface{}) *insert {
-	newExprs := getExprs(exprs)
-	i.cols = append(i.cols, newExprs...)
+func (i *insert) Cols(intfs ...interface{}) *insert {
+	i.cols = append(i.cols, getExprs(intfs)...)
 	return i
 }
 
-func (i *insert) Union(exprs ...interface{}) *insert {
-	newExprs := getExprs(exprs)
-	i.union = append(i.union, newExprs...)
+func (i *insert) Union(intfs ...interface{}) *insert {
+	i.union = append(i.union, getExprs(intfs)...)
 	return i
 }
 
@@ -50,9 +49,13 @@ func (i *insert) Select(q *selectQ) *insert {
 	return i
 }
 
-func (i *insert) Vals(exprs ...interface{}) *insert {
-	newExprs := getExprs(exprs)
-	i.vals = append(i.vals, newExprs...)
+func (i *insert) Vals(intfs ...interface{}) *insert {
+	i.vals = append(i.vals, getExprs(intfs)...)
+	return i
+}
+
+func (i *insert) OnDuplicateKey(intfs ...interface{}) *insert {
+	i.onDupKey = append(i.onDupKey, getExprs(intfs)...)
 	return i
 }
 
@@ -110,6 +113,14 @@ func (i *insert) ToSql() (string, []interface{}, error) {
 		}
 		sql += qs
 		params = append(params, qp...)
+	}
+
+	if len(i.onDupKey) > 0 {
+		sql += "ON DUPLICATE KEY UPDATE "
+		nsql, nparams := exprsToSql(i.onDupKey)
+		sql += strings.Join(nsql, ", ")
+		params = append(params, nparams...)
+		sql += " "
 	}
 
 	sql = dialectReplace(i.dialect, sql, params)
