@@ -68,6 +68,20 @@ SELECT * FROM users WHERE (email = $1 AND password = $2)
 PARAMS: [foo@bar.com p4ssw0rd]
 ```
 
+### Select As
+
+```golang
+bqb.Select(
+    "a",
+    Select("a").From("table_b").As("b_a"),
+).From("table_a")
+```
+
+Produces
+```sql
+SELECT a, (SELECT a FROM table_b) AS b_a FROM table_a
+```
+
 ### Select With Join
 
 ```golang
