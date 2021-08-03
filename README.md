@@ -348,6 +348,21 @@ INSERT INTO my_table (a, b, c, d) VALUES (a, ?, ?, ?)
 PARAMS: [b c d]
 ```
 
+This even applies to `Select()`
+
+```golang
+q := bqb.Select("age", "name").From("users")
+if getEmail {
+    q.Select("email")
+}
+```
+
+Produces
+```sql
+SELECT age, name, email FROM users
+```
+
+
 ### Escaping `?`
 
 Just use `??` instead of `?` in the query, for example:
