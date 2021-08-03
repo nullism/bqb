@@ -10,6 +10,8 @@ type update struct {
 	update  []Expr
 	set     []Expr
 	where   []Expr
+	offset  int
+	limit   int
 }
 
 func Update(exprs ...interface{}) *update {
@@ -17,30 +19,6 @@ func Update(exprs ...interface{}) *update {
 		dialect: SQL,
 		update:  getExprs(exprs),
 	}
-}
-
-func UpdateSql() *update {
-	return &update{dialect: SQL}
-}
-
-func UpdateMysql() *update {
-	return &update{dialect: MYSQL}
-}
-
-func UpdateRaw() *update {
-	return &update{dialect: PGSQL}
-}
-
-func (u *update) Set(exprs ...interface{}) *update {
-	newExprs := getExprs(exprs)
-	u.set = append(u.set, newExprs...)
-	return u
-}
-
-func (u *update) Where(exprs ...interface{}) *update {
-	newExprs := getExprs(exprs)
-	u.where = append(u.where, newExprs...)
-	return u
 }
 
 func (u *update) Postgres() *update {
@@ -55,6 +33,28 @@ func (u *update) Mysql() *update {
 
 func (u *update) Raw() *update {
 	u.dialect = RAW
+	return u
+}
+
+func (u *update) Set(exprs ...interface{}) *update {
+	newExprs := getExprs(exprs)
+	u.set = append(u.set, newExprs...)
+	return u
+}
+
+func (u *update) Where(exprs ...interface{}) *update {
+	newExprs := getExprs(exprs)
+	u.where = append(u.where, newExprs...)
+	return u
+}
+
+func (u *update) Offset(offset int) *update {
+	u.offset = offset
+	return u
+}
+
+func (u *update) Limit(limit int) *update {
+	u.limit = limit
 	return u
 }
 
@@ -95,6 +95,14 @@ func (u *update) ToSql() (string, []interface{}, error) {
 		sql += strings.Join(nsql, ", ")
 		params = append(params, nparams...)
 		sql += " "
+	}
+
+	if u.offset != 0 {
+		sql += fmt.Sprintf("OFFSET %d ", u.offset)
+	}
+
+	if u.limit != 0 {
+		sql += fmt.Sprintf("LIMIT %d ", u.limit)
 	}
 
 	sql = dialectReplace(u.dialect, sql, params)
