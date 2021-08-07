@@ -133,12 +133,33 @@ If all values are `false`, the query would be:
 SELECT * FROM my_table LIMIT 10
 ```
 
+## Methods
+
+Methods on the bqb `Query` struct follow the same pattern.
+
+That is the method name indicates how to join the new part to the existing query.
+
+For example `q.And("abc")` will add `AND abc` to the query.
+
+Take the following
+
+```golang
+q := bqb.Empty("WHERE")
+q.Space("1 = 2") // query is now WHERE 1 = 2
+q.And("b") // query is now WHERE 1 = 2 AND b
+q.Or("c") // query is now WHERE 1 = 2 AND b OR c
+q.Concat("d") // query is now WHERE 1 = 2 AND b OR cd
+q.Comma("e") // query is now WHERE 1 = 2 AND b OR cd,e
+q.Join("+", "f") // query is now WHERE 1 = 2 AND b OR cd,e+f
+```
+
 # Frequently Asked Questions
 
 ## Is there more documentation?
 
 It's not really necessary because the API is so tiny.
 Most of the documentation will be around how to use SQL.
+However, you can check out the [tests](./query_test.go) to see the variety of usages.
 
 ## Why not just use a string builder?
 
