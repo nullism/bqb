@@ -6,25 +6,10 @@ import (
 )
 
 func TestA(t *testing.T) {
-	q := New("SELECT name FROM users")
-
-	where := Empty("WHERE")
-
-	checkAge, checkName, nullNameOkay := true, true, true
-
-	if checkAge {
-		where.And("age > ?", 21)
-	}
-
-	if checkName {
-		or := New("name = ?", "trusted")
-		if nullNameOkay {
-			or.Or("name IS ?", nil)
-		}
-		where.And("(?)", or)
-	}
-
-	q.Space("?", where)
+	var a *string
+	var b *int
+	q := New("a = ?, b = ?", a, b)
+	// q.ToRaw()
 	q.Print()
 }
 
