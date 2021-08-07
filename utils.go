@@ -18,18 +18,18 @@ func paramToRaw(param interface{}) string {
 	switch p := param.(type) {
 	case int, float32, float64:
 		return fmt.Sprintf("%v", p)
-	case *int, *float32, *float64:
-		if param != nil {
+	case *int:
+		if p == nil {
 			return "NULL"
 		}
-		return fmt.Sprintf("%v", p)
+		return fmt.Sprintf("%v", *p)
 	case string:
 		return fmt.Sprintf("'%v'", p)
 	case *string:
 		if p == nil {
 			return "NULL"
 		}
-		return fmt.Sprintf("'%v'", p)
+		return fmt.Sprintf("'%v'", *p)
 	case nil:
 		return "NULL"
 	default:

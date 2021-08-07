@@ -24,7 +24,7 @@ SELECT * FROM places WHERE id = ?
 PARAMS: [1234]
 ```
 
-## Postgres
+## Postgres - ToPsql()
 
 Just call the `ToPsql()` method instead of `ToSql()` to convert the query to Postgres syntax
 
@@ -43,6 +43,22 @@ DELETE FROM users WHERE id = $1 OR name IN ($2, $3) LIMIT $4
 PARAMS: [7, "delete", "remove", 5]
 ```
 
+## Raw - ToRaw()
+
+*Obvious warning: You should not use this for user input*
+
+The `ToRaw()` call returns a string with the values filled in rather than parameterized
+
+```golang
+q := New("a = ?, b = ?, c = ?", "my a", 1234, nil)
+sql, err := q.ToRaw()
+```
+
+Produces
+```
+a = 'my a', b = 1234, c = NULL
+```
+
 ## Types
 
 ```golang
@@ -55,6 +71,21 @@ sql, _ := q.ToRaw()
 Produces
 ```
 int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{"6":6}' nil:NULL
+```
+
+## Query IN
+
+Arguments of type `[]string`,`[]*string` or `[]int`,`[]*int` are automatically expanded.
+
+```golang
+    q := bqb.New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
+	sql, params, _ := q.ToSql()
+```
+
+Produces
+```
+SQL: (?,?) (?) (?,?) (?)
+PARAMS: [a b <nil> 1 2 <nil>]
 ```
 
 ## Query Building

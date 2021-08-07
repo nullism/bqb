@@ -6,16 +6,25 @@ import (
 )
 
 func TestA(t *testing.T) {
-	var a *string
-	var b *int
-	var c []*string
+	q := New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
+	sql, params, _ := q.ToSql()
 
-	c = append(c, a)
-	c = append(c, a)
-
-	q := New("a = ?, b = ?, c = ?", a, b, c)
-	q.ToRaw()
+	if len(params) != 6 {
+		t.Errorf("invalid params")
+	}
 	q.Print()
+	println(sql)
+}
+
+func TestArrays(t *testing.T) {
+	q := New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
+	sql, params, _ := q.ToSql()
+
+	if len(params) != 6 {
+		t.Errorf("invalid params")
+	}
+	q.Print()
+	println(sql)
 }
 
 func TestSpace(t *testing.T) {
@@ -93,6 +102,19 @@ func TestParamsExtra(t *testing.T) {
 	t.Errorf("extra ? considered valid")
 }
 
+func TestParamsFunc(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(r.(string), "cannot convert") {
+				t.Errorf("invalid panic for missing params: %v", r)
+			}
+		}
+	}()
+
+	New("?", func() {}).ToRaw()
+	t.Errorf("was able to convert function arg")
+}
+
 func TestParamsJson(t *testing.T) {
 	q := New("INSERT INTO foo (json) VALUES (?)", &Json{"a": "test", "b": []int{1, 2}})
 
@@ -106,6 +128,29 @@ func TestParamsJson(t *testing.T) {
 	if params[0] != pwant {
 		t.Errorf("want: %q, got: %q", pwant, params[0])
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(r.(string), "jsonify") {
+				t.Errorf("invalid panic for missing params: %v", r)
+			}
+		}
+	}()
+	New("?", &Json{"a": func() {}})
+	t.Errorf("didn't panic")
+
+}
+
+func TestParamsJsonP(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(r.(string), "jsonify") {
+				t.Errorf("invalid panic for missing params: %v", r)
+			}
+		}
+	}()
+	New("?", Json{"a": func() {}})
+	t.Errorf("didn't panic")
 }
 
 func TestParamsMissing(t *testing.T) {
@@ -247,20 +292,33 @@ func TestQuerySubquery(t *testing.T) {
 func TestQueryTypes(t *testing.T) {
 	int_ := 1
 	ints_ := []int{2, 2}
+
 	string_ := "s"
 	strings_ := []string{"s1", "s2"}
-	var intp *int
-	var intsp []*int
-	var stringp *string
-	var stringsp []*string
+
+	intp := &int_
+	var intpn *int
+	intsp := []*int{&int_, &int_}
+	var intspn []*int
+
+	stringp := &string_
+	var stringpn *string
+	stringsp := []*string{&string_, &string_}
+	var stringspn []*string
+
 	json_ := Json{"a": 1}
 	var jsonp *Json
 
-	text := "? ? - ? ? - ? ? - ? ? - ? ?"
-	q := New(text, int_, ints_, string_, strings_, intp, intsp, stringp, stringsp, json_, jsonp)
+	text := "i:? ? - s:? ? - ip:? ? ? ? - sp:? ? ? ? - j:? ?"
+	q := New(text,
+		int_, ints_,
+		string_, strings_,
+		intp, intpn, intsp, intspn,
+		stringp, stringpn, stringsp, stringspn,
+		json_, jsonp)
 	sql, _ := q.ToRaw()
-	want := `1 2,2 - 's' 's1','s2' - NULL NULL - NULL NULL - '{"a":1}' 'null'`
+	want := `i:1 2,2 - s:'s' 's1','s2' - ip:1 NULL 1,1 NULL - sp:'s' NULL 's','s' NULL - j:'{"a":1}' 'null'`
 	if want != sql {
-		t.Errorf("got: %q, want: %q", sql, want)
+		t.Errorf("\ngot : %q\nwant: %q", sql, want)
 	}
 }
