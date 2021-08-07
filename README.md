@@ -138,6 +138,7 @@ SELECT * FROM my_table LIMIT 10
 Methods on the bqb `Query` struct follow the same pattern.
 
 That is the method name indicates how to join the new part to the existing query.
+And all methods take a string (the query text) and variable length interface (the query args).
 
 For example `q.And("abc")` will add `AND abc` to the query.
 
@@ -152,6 +153,8 @@ q.Concat("d") // query is now WHERE 1 = 2 AND b OR cd
 q.Comma("e") // query is now WHERE 1 = 2 AND b OR cd,e
 q.Join("+", "f") // query is now WHERE 1 = 2 AND b OR cd,e+f
 ```
+
+Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, or `[]string`.
 
 # Frequently Asked Questions
 
