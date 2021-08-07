@@ -16,7 +16,7 @@ const (
 
 func paramToRaw(param interface{}) string {
 	switch p := param.(type) {
-	case int:
+	case int, float32, float64:
 		return fmt.Sprintf("%v", p)
 	case string:
 		return fmt.Sprintf("'%v'", p)
