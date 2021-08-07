@@ -5,6 +5,7 @@
 1. Simple, lightweight, and fast
 2. Supports any and all syntax by the nature of how it works
 3. Doesn't require learning special syntax or operators
+4. &gt;90% test coverage
 
 # Examples
 
