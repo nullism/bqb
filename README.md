@@ -1,372 +1,267 @@
-# bqb
-Basic Query Builder
+# Basic Query Builder
 
-This project aims to provide a very lightweight and easy to use Query Builder
-that provides an unescaped-first paradigm.
+# Why
 
-## Why?
+1. Simple, lightweight, and fast
+2. Supports any and all syntax by the nature of how it works
+3. Doesn't require learning special syntax or operators
 
-* `bqb` does not require you to learn special syntax for operators.
-* `bqb` makes `and`/`or` grouping function universally, and can be added to any clause.
-* `bqb` is very small and quite fast.
-* `bqb` is order-independent. Query components can be added in any order, which prevents side effects with complex query building logic.
+# Examples
 
-
-## Examples
+## Basic
 
 ```golang
-// Examples assume bqb has been imported
-import "github.com/nullism/bqb"
-```
-
-Running examples:
-```
-$ go run examples/query/main.go
-...
-$ go run examples/insert/main.go
-...
-```
-
-### Basic Select
-
-```golang
-q := bqb.Select("id, name, email").
-    From("users").
-    Where("email LIKE '%@yahoo.com'")
+q := bqb.New("SELECT * FROM places WHERE id = ?", 1234)
 sql, params, err := q.ToSql()
 ```
 
 Produces
-
 ```sql
-SELECT id, name, email FROM users WHERE (email LIKE '%@yahoo.com')
+SELECT * FROM places WHERE id = ?
+```
+```
+PARAMS: [1234]
 ```
 
-### Bind Variables
+## Postgres
 
-Often times user-provided information is used to generate queries.
-In this case, you should _always_ wrap those values in the `V()` function.
+Just call the `ToPsql()` method instead of `ToSql()` to convert the query to Postgres syntax
 
 ```golang
-email := "foo@bar.com"
-password := "p4ssw0rd"
-q := bqb.Select("*").
-    From("users").
-    Where(
-        bqb.And(
-            bqb.V("email = ?", email),
-            bqb.V("password = ?", password),
-        ),
-    ).Postgres()
+q := bqb.New("DELETE FROM users").
+    Space("WHERE id = ? OR name IN (?)", 7, []string{"delete", "remove"}).
+    Space("LIMIT ?", 5)
+sql, params, err := q.ToPsql()
 ```
 
 Produces
 ```sql
-SELECT * FROM users WHERE (email = $1 AND password = $2)
+DELETE FROM users WHERE id = $1 OR name IN ($2, $3) LIMIT $4
 ```
 ```
-PARAMS: [foo@bar.com p4ssw0rd]
+PARAMS: [7, "delete", "remove", 5]
 ```
 
-### Select As
+## Query Building
+
+Since queries are built in an additive way by reference rather than value, it's easy to mutate a query without
+having to reassign the result.
+
+### Basic Example
 
 ```golang
-bqb.Select(
-    "a",
-    Select("a").From("table_b").As("b_a"),
-).From("table_a")
-```
+sel := bqb.New("SELECT")
 
-Produces
-```sql
-SELECT a, (SELECT a FROM table_b) AS b_a FROM table_a
-```
-
-### Select With Join
-
-```golang
-bqb.Select("uuidv3_generate() as uuid", "u.id", "UPPER(u.name) as screamname", "u.age", "e.email").
-    From("users u").
-    Join("emails e ON e.user_id = u.id").
-    JoinType(
-        "LEFT OUTER JOIN",
-        "friends f ON f.user_id = u.id",
-    ).
-    Where(
-        bqb.Or(
-            bqb.And(
-                bqb.V("u.id IN (?, ?, ?)", 1, 3, 5),
-                bqb.V("e.email LIKE ?", "%@gmail.com"),
-            ),
-            bqb.And(
-                bqb.V("u.id IN (?, ?, ?)", 2, 4, 6),
-                bqb.V("e.email LIKE ?", "%@yahoo.com"),
-            ),
-            bqb.V("u.id IN (?)", []int{7, 8, 9, 10, 11, 12}),
-        ),
-    ).
-    OrderBy("u.age DESC").
-    Limit(10).
-    Postgres()
-```
-
-Produces
-
-```sql
-SELECT uuidv3_generate() as uuid, u.id, UPPER(u.name) as screamname, u.age, e.email
-FROM users u
-    JOIN emails e ON e.user_id = u.id
-    LEFT OUTER JOIN friends f ON f.user_id = u.id
-WHERE (
-    (u.id IN ($1, $2, $3) AND e.email LIKE $4)
-    OR
-    (u.id IN ($5, $6, $7) AND e.email LIKE $8)
-    OR
-    u.id IN ($9, $10, $11, $12, $13, $14)
-)
-ORDER BY u.age DESC LIMIT 10
-```
-```
-PARAMS: [1 3 5 %@gmail.com 2 4 6 %@hotmail.com 7 8 9 10 11 12]
-```
-
-### And / Or
-
-And and Or can be used in any clause and not just `Where`. Subselects, `Having`, `OrderBy`, etc are all valid.
-Separate clauses are assumed to be joined with `, ` without an `Or` or `And` call.
-
-
-For example:
-
-```golang
-bqb.Select("*").From("patrons").
-    Where(
-        bqb.Or(
-            bqb.And(
-                "drivers_license IS NOT NULL",
-                bqb.And("age > 20", "age < 60"),
-            ),
-            bqb.And(
-                "drivers_license IS NULL",
-                "age >= 60",
-            ),
-            "is_known = true",
-        ),
-    ).Postgres()
-```
-
-Produces
-
-```sql
-SELECT * FROM patrons WHERE (
-    (
-        drivers_license IS NOT NULL AND (
-            age > 20 AND age < 60
-        )
-    )
-    ) OR (
-    drivers_license IS NULL AND age >= 60
-    ) OR is_known = true
-)
-```
-
-### Basic Insert
-
-```golang
-q := bqb.Insert("my_table").
-    Cols("name", "age", "current_time").
-    Vals(bqb.V("?, ?, ?", "someone", 42, "2021-01-01 01:01:01Z")).
-    Postgres()
-```
-
-Produces
-```sql
-INSERT INTO my_table (name, age, current_time) ($1, $2, $3)
-```
-```
-PARAMS: [someone 42 2021-01-01 01:01:01Z]
-```
-
-### Insert .. Select
-
-```golang
-q := bqb.Insert("my_table").
-    Cols("name", "age", "current_time").
-    Select(
-        bqb.Select("b_name", "b_age", "b_time").
-            From("b_table").
-            Where(bqb.V("my_age > ?", 20)).
-            Limit(10),
-    ).Postgres()
-```
-
-Produces
-```sql
-INSERT INTO my_table (name, age, current_time)
-SELECT b_name, b_age, b_time FROM b_table WHERE my_age > $1 LIMIT 10
-```
-```
-PARAMS: [20]
-```
-
-### Basic Update
-
-```golang
-bqb.UpdatePsql().
-    Update("my_table").
-    Set(
-        bqb.V("name = ?", "McCallister"),
-        "age = 20", "current_time = CURRENT_TIMESTAMP()",
-    ).
-    Where(
-        bqb.V("name = ?", "Mcallister"),
-    )
-```
-
-Produces
-```sql
-UPDATE my_table SET name = $1, age = 20, current_time = CURRENT_TIMESTAMP()
-WHERE name = $2
-```
-```
-PARAMS: [McCallister Mcallister]
-```
-
-### Update with Sub-Queries
-
-As with all clauses, sub-queries can be written inline as part of the clause or assigned
-to a variable and used that way.
-
-Note that the `Enclose()` method simply wraps the query in parentheses.
-
-The `Concat()` method makes the following expressions join without any separator.
-
-```golang
-timeQ := bqb.Select("timestamp").
-    From("time_data").
-    Where("is_current = true").
-    Limit(1)
-
-nameQ := bqb.Select("name").
-    From("users").
-    Where(bqb.V("name LIKE ?", "%allister"))
-
-bqb.Update("my_table").
-    Set(
-        bqb.V("name = ?", "McCallister"),
-        "age = 20",
-        bqb.Concat(
-            "current_timestamp = ",
-            timeQ.Enclose(),
-        ),
-    ).
-    Where(
-        bqb.Concat(
-            "name IN ",
-            nameQ.Enclose(),
-        ),
-    ).Postgres()
-```
-
-Produces
-```sql
-UPDATE my_table SET name = $1, age = 20, current_timestamp = (
-    SELECT timestamp FROM time_data WHERE is_current = true LIMIT 1
-) WHERE name IN (
-    SELECT name FROM users WHERE name LIKE $2
-)
-```
-```
-PARAMS: [McCallister %allister]
-```
-
-### Using Text Queries
-
-Sometimes it's easier to read inline queries than it
-is to add another `bqb.Select()` to an existing query.
-In these instances there's nothing wrong with writing an inline query as follows:
-
-```golang
-bqb.Select(
-        "age as my_age",
-        "(SELECT id FROM id_list WHERE user='me') as my_id",
-    ).
 ...
-```
 
-### Create Table / Indexes
+// later
+sel.Space("id")
 
-```golang
-bqb.CreateTable("my_table").Cols("a VARCHAR(50) NOT NULL", "b BOOLEAN DEFAULT false")
-```
+...
 
-Produces
-```sql
-CREATE TABLE my_table (
-    a VARCHAR(50) NOT NULL,
-    b BOOLEAN DEFAULT false
-)
-```
-
-Subqueries are also possible in `CreateTable`
-
-```golang
-bqb.CreateTable("new_table").
-    Cols("a INT NOT NULL DEFAULT 1", "b VARCHAR(50) NOT NULL").
-    Select(
-        bqb.Select("a", "b").From("other_table").Where("a IS NOT NULL"),
-    )
+// even later
+sel.Comma("age").Comma("email")
 ```
 
 Produces
 ```sql
-CREATE TABLE new_table AS
-SELECT a, b FROM other_table WHERE a IS NOT NULL
+SELECT id,age,email
 ```
 
-### Order Independent Query Building
+### Advanced Example
 
-Any query method that accepts `...interface{}` acts as in an _additive_ manner.
-
-This applies to the pointer instead of creating a copy for two reasons:
-
-1. Less overhead than creating struct copies.
-2. Less syntax than having to reassign `q` while building the query.
+The `Empty()` function returns a query that resolves to an empty string if no query parts have
+been added via methods on the query instance. For example `q := Empty("SELECT")` will resolve to
+an empty string unless parts have been added by one of the methods,
+e.g `q.Space("* FROM my_table")` would make `q.ToSql()` resolve to `SELECT * FROM my_table`.
 
 ```golang
-q := bqb.Insert("my_table").Cols("a").Vals("a")
-for _, k := range []string{"b", "c", "d"} {
-    q.Vals(bqb.V("?", k)).Cols(k)
+
+sel := bqb.Empty("SELECT")
+
+if getName {
+    sel.Comma("name")
 }
-```
 
-Produces
-```sql
-INSERT INTO my_table (a, b, c, d) VALUES (a, ?, ?, ?)
-```
-```
-PARAMS: [b c d]
-```
-
-This even applies to `Select()`
-
-```golang
-q := bqb.Select("age", "name").From("users")
-if getEmail {
-    q.Select("email")
+if getId {
+    sel.Comma("id")
 }
+
+if !getName && !getId {
+    sel.Comma("*")
+}
+
+from := bqb.Empty("FROM")
+from.Space("my_table")
+
+where := bqb.Empty("WHERE")
+
+if filterAdult {
+    adultCond := bqb.Empty().
+        And("name = ?", "adult")
+    if ageCheck {
+        adultCond.And("age > ?", 20)
+    }
+    where.And("(?)", adultCond)
+}
+
+if filterChild {
+    where.Or("(name = ? AND age < ?)", "youth", 21)
+}
+
+q := bqb.New("? ? ? LIMIT ?", sel, from, where, 10)
 ```
 
-Produces
+Assuming all values are true, the query would look like:
 ```sql
-SELECT age, name, email FROM users
+SELECT name,id FROM my_table WHERE (name = 'adult' AND age > 20) OR (name = 'youth' AND age < 21) LIMIT 10
 ```
 
+If `getName` and `getId` are false, the query would be
+```sql
+SELECT * FROM my_table WHERE (name = 'adult' AND age > 20) OR (name = 'youth' AND age < 21) LIMIT 10
+```
 
-### Escaping `?`
+If `filterAdult` is `false`, the query would be:
+```sql
+SELECT name,id FROM my_table WHERE (name = 'youth' AND age < 21) LIMIT 10
+```
 
-Just use `??` instead of `?` in the query, for example:
+If all values are `false`, the query would be:
+```sql
+SELECT * FROM my_table LIMIT 10
+```
+
+# Frequently Asked Questions
+
+## Why not just use a string builder?
+
+Bqb provides several benefits over a string builder:
+
+For example let's say we use the string builder way to build the following:
 
 ```golang
-Select("data->>'id' ?? '1234'") ...
+var params []interface{}
+q := "SELECT * FROM my_table WHERE "
+if filterAge {
+    params = append(params, 21)
+    q += fmt.Sprintf("age > $%d ", len(params))
+}
+
+if filterBobs {
+    params = append(params, "Bob%")
+    q += fmt.Sprintf("name LIKE $%d ", len(params))
+}
+
+if limit != nil {
+    params = append(params, limit)
+    q += fmt.Sprintf("LIMIT $%d", len(params))
+}
+
+// SELECT * FROM my_table WHERE age > $1 AND name LIKE $2 LIMIT $3
 ```
+
+Some problems with that approach
+1. If `filterBobs` and `filterAge` are false, the query has an empty where clause
+2. You must remember to include a trailing space for each clause
+3. You have to keep track of parameter count (for Postgres anyway)
+4. It's kind of ugly
+
+The same logic can be achieved with `bqb` a bit more cleanly
+
+```golang
+q := bqb.New("SELECT * FROM my_table")
+where := bqb.Empty("WHERE")
+if filterAge {
+    where.And("age > ?", 21)
+}
+
+if filterBobs {
+    where.And("name LIKE ?", "Bob%")
+}
+
+q.Space("?", where)
+
+if limit != nil {
+    q.Space("LIMIT ?", limit)
+}
+
+// SELECT * FROM my_table WHERE age > $1 AND name LIKE $2 LIMIT $3
+```
+
+Both methods will allow you to remain close to the SQL, however the `bqb` approach will
+1. Easily adapt to MySQL or Postgres without changing parameters
+2. Hide the "WHERE" clause if both `filterBobs` and `filterAge` are false
+
+
+## Why not use a full query builder?
+
+Take the following _typical_ query example:
+
+```golang
+q := qb.Select("*").From("users").Where(qb.And{qb.Eq{"name": "Ed"}, qb.Gt{"age": 21})
+```
+
+Vs the bqb way:
+
+```golang
+q := bqb.New("SELECT * FROM users WHERE name = ? AND age > ?", "ed", 21)
+```
+
+## Okay, so a simple query it might make sense to use something like `bqb`, but what about grouped queries?
+
+
+A query builder can handle this in multiple ways, a fairly common pattern might be:
+
+```golang
+q := qb.Select("name").From("users")
+
+and := qb.And{}
+
+if checkAge {
+    and = append(and, qb.Gt{"age": 21})
+}
+
+if checkName {
+    or := qb.Or{qb.Eq{"name":"trusted"}}
+    if nullNameOkay {
+        or = append(or, qb.Is{"name": nil})
+    }
+    and = append(and, or)
+}
+
+q = q.Where(and)
+
+// SELECT name FROM users WHERE age > 21 AND (name = 'trusted' OR name IS NULL)
+```
+
+Contrast that with the `bqb` approach:
+
+```golang
+
+q := bqb.New("SELECT name FROM users")
+
+where := bqb.Empty("WHERE")
+
+if checkAge {
+    where.And("age > ?", 21)
+}
+
+if checkName {
+    or := bqb.New("name = ?", "trusted")
+    if nullNameOkay {
+        or.Or("name IS ?", nil)
+    }
+    where.And("(?)", or)
+}
+
+q.Space("?", where)
+
+// SELECT name FROM users WHERE age > 21 AND (name = 'trusted' OR name IS NULL)
+```
+
+It seems to be a matter of taste as to which method appears cleaner.
+
+
+
+
