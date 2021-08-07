@@ -10,7 +10,7 @@ type part struct {
 	Params []interface{}
 }
 
-type query struct {
+type Query struct {
 	dialect string
 	Parts   []part
 	Prepend string
@@ -42,7 +42,7 @@ func makePart(text string, args ...interface{}) part {
 			}
 			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
 
-		case *query:
+		case *Query:
 			sql, params, _ := v.toSql()
 			text = strings.Replace(text, "?", sql, 1)
 			newArgs = append(newArgs, params...)
@@ -70,41 +70,41 @@ func makePart(text string, args ...interface{}) part {
 	}
 }
 
-func New(text string, args ...interface{}) *query {
-	q := &query{
+func New(text string, args ...interface{}) *Query {
+	q := &Query{
 		dialect: SQL,
 	}
 	q.Parts = append(q.Parts, makePart(text, args...))
 	return q
 }
 
-func Empty(prep ...string) *query {
-	return &query{
+func Empty(prep ...string) *Query {
+	return &Query{
 		Prepend: strings.Join(prep, " "),
 	}
 }
 
-func (q *query) Space(text string, args ...interface{}) *query {
+func (q *Query) Space(text string, args ...interface{}) *Query {
 	return q.Join(" ", text, args...)
 }
 
-func (q *query) And(text string, args ...interface{}) *query {
+func (q *Query) And(text string, args ...interface{}) *Query {
 	return q.Join(" AND ", text, args...)
 }
 
-func (q *query) Or(text string, args ...interface{}) *query {
+func (q *Query) Or(text string, args ...interface{}) *Query {
 	return q.Join(" OR ", text, args...)
 }
 
-func (q *query) Comma(text string, args ...interface{}) *query {
+func (q *Query) Comma(text string, args ...interface{}) *Query {
 	return q.Join(",", text, args...)
 }
 
-func (q *query) Concat(text string, args ...interface{}) *query {
+func (q *Query) Concat(text string, args ...interface{}) *Query {
 	return q.Join("", text, args...)
 }
 
-func (q *query) Join(sep, text string, args ...interface{}) *query {
+func (q *Query) Join(sep, text string, args ...interface{}) *Query {
 	if len(q.Parts) > 0 {
 		q.Parts = append(q.Parts, makePart(sep+text, args...))
 	} else {
@@ -114,14 +114,14 @@ func (q *query) Join(sep, text string, args ...interface{}) *query {
 	return q
 }
 
-func (q *query) Print() {
+func (q *Query) Print() {
 	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
 	fmt.Printf("PARAMS: %v\n", params)
 	fmt.Printf("ERROR: %v\n", err)
 }
 
-func (q *query) ToSql() (string, []interface{}, error) {
+func (q *Query) ToSql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
 	if err != nil {
 		return "", nil, err
@@ -130,18 +130,18 @@ func (q *query) ToSql() (string, []interface{}, error) {
 	return dialectReplace(q.dialect, sql, params), params, nil
 }
 
-func (q *query) ToPsql() (string, []interface{}, error) {
+func (q *Query) ToPsql() (string, []interface{}, error) {
 	q.dialect = PGSQL
 	return q.ToSql()
 }
 
-func (q *query) ToRaw() (string, error) {
+func (q *Query) ToRaw() (string, error) {
 	q.dialect = RAW
 	sql, _, err := q.ToSql()
 	return sql, err
 }
 
-func (q *query) toSql() (string, []interface{}, error) {
+func (q *Query) toSql() (string, []interface{}, error) {
 	var sql string
 	var params []interface{}
 
