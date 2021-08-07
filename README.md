@@ -135,6 +135,11 @@ SELECT * FROM my_table LIMIT 10
 
 # Frequently Asked Questions
 
+## Is there more documentation?
+
+It's not really necessary because the API is so tiny.
+Most of the documentation will be around how to use SQL.
+
 ## Why not just use a string builder?
 
 Bqb provides several benefits over a string builder:
