@@ -1,6 +1,7 @@
 package bqb
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -15,6 +16,8 @@ type Query struct {
 	Parts   []part
 	Prepend string
 }
+
+type Json map[string]interface{}
 
 func makePart(text string, args ...interface{}) part {
 	tempPh := "XXX___XXX"
@@ -34,6 +37,19 @@ func makePart(text string, args ...interface{}) part {
 			}
 			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
 
+		case []*int:
+			newPh := []string{}
+			for _, i := range v {
+				newPh = append(newPh, paramPh)
+				newArgs = append(newArgs, i)
+			}
+			if len(newPh) > 0 {
+				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+			} else {
+				text = strings.Replace(text, "?", paramPh, 1)
+				newArgs = append(newArgs, nil)
+			}
+
 		case []string:
 			newPh := []string{}
 			for _, s := range v {
@@ -42,10 +58,50 @@ func makePart(text string, args ...interface{}) part {
 			}
 			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
 
+		case []*string:
+			newPh := []string{}
+			for _, s := range v {
+				newPh = append(newPh, paramPh)
+				newArgs = append(newArgs, s)
+			}
+			if len(newPh) > 0 {
+				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+			} else {
+				text = strings.Replace(text, "?", paramPh, 1)
+				newArgs = append(newArgs, nil)
+			}
+
 		case *Query:
 			sql, params, _ := v.toSql()
 			text = strings.Replace(text, "?", sql, 1)
 			newArgs = append(newArgs, params...)
+
+		case Json:
+			bytes, err := json.Marshal(v)
+			if err != nil {
+				panic(fmt.Sprintf("cann jsonify struct: %v", err))
+			}
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, string(bytes))
+
+		case *Json:
+			bytes, err := json.Marshal(v)
+			if err != nil {
+				panic(fmt.Sprintf("cann jsonify struct: %v", err))
+			}
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, string(bytes))
+
+		case string, bool,
+			int, int8, int16, int32, int64,
+			uint8, uint16, uint32, uint64,
+			float32, float64:
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, arg)
+
+		case nil, *string, *int:
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, v)
 
 		default:
 			text = strings.Replace(text, "?", paramPh, 1)

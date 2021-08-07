@@ -43,6 +43,20 @@ DELETE FROM users WHERE id = $1 OR name IN ($2, $3) LIMIT $4
 PARAMS: [7, "delete", "remove", 5]
 ```
 
+## Types
+
+```golang
+q := bqb.New(
+    "int:? string:? []int:? []string:? Query:? Json:? nil:?",
+    1, "2", []int{3, 3}, []string{"4", "4"}, bqb.New("5"), bqb.Json{"6": 6}, nil,
+)
+sql, _ := q.ToRaw()
+```
+Produces
+```
+int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{"6":6}' nil:NULL
+```
+
 ## Query Building
 
 Since queries are built in an additive way by reference rather than value, it's easy to mutate a query without

@@ -8,8 +8,13 @@ import (
 func TestA(t *testing.T) {
 	var a *string
 	var b *int
-	q := New("a = ?, b = ?", a, b)
-	// q.ToRaw()
+	var c []*string
+
+	c = append(c, a)
+	c = append(c, a)
+
+	q := New("a = ?, b = ?, c = ?", a, b, c)
+	q.ToRaw()
 	q.Print()
 }
 
@@ -86,6 +91,21 @@ func TestParamsExtra(t *testing.T) {
 
 	New("params ? ?", 1)
 	t.Errorf("extra ? considered valid")
+}
+
+func TestParamsJson(t *testing.T) {
+	q := New("INSERT INTO foo (json) VALUES (?)", &Json{"a": "test", "b": []int{1, 2}})
+
+	sql, params, _ := q.ToSql()
+	want := "INSERT INTO foo (json) VALUES (?)"
+	if sql != want {
+		t.Errorf("want: %q, got: %q", want, sql)
+	}
+
+	pwant := `{"a":"test","b":[1,2]}`
+	if params[0] != pwant {
+		t.Errorf("want: %q, got: %q", pwant, params[0])
+	}
 }
 
 func TestParamsMissing(t *testing.T) {
@@ -184,11 +204,14 @@ func TestQueryPrint(t *testing.T) {
 }
 
 func TestQueryRaw(t *testing.T) {
-	q := New("WHERE name = ? AND age = ?", "name", 21).
-		And("id IN (?) AND email IS ?", []int{1, 2, 3, 4}, nil)
+
+	q := New(
+		"int:? string:? []int:? []string:? Query:? Json:? nil:?",
+		1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), Json{"6": 6}, nil,
+	)
 	sql, _ := q.ToRaw()
 
-	want := "WHERE name = 'name' AND age = 21 AND id IN (1,2,3,4) AND email IS NULL"
+	want := "int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{\"6\":6}' nil:NULL"
 	if want != sql {
 		t.Errorf("got: %q, want: %q", sql, want)
 	}
@@ -216,6 +239,27 @@ func TestQuerySubquery(t *testing.T) {
 	}
 
 	want := "SELECT name, (SELECT time FROM logins LIMIT 1) as time, age FROM users WHERE id NOT IN ($1,$2,$3,$4) AND name NOT LIKE $5 LIMIT 1"
+	if want != sql {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+}
+
+func TestQueryTypes(t *testing.T) {
+	int_ := 1
+	ints_ := []int{2, 2}
+	string_ := "s"
+	strings_ := []string{"s1", "s2"}
+	var intp *int
+	var intsp []*int
+	var stringp *string
+	var stringsp []*string
+	json_ := Json{"a": 1}
+	var jsonp *Json
+
+	text := "? ? - ? ? - ? ? - ? ? - ? ?"
+	q := New(text, int_, ints_, string_, strings_, intp, intsp, stringp, stringsp, json_, jsonp)
+	sql, _ := q.ToRaw()
+	want := `1 2,2 - 's' 's1','s2' - NULL NULL - NULL NULL - '{"a":1}' 'null'`
 	if want != sql {
 		t.Errorf("got: %q, want: %q", sql, want)
 	}
