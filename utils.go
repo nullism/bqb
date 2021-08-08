@@ -148,7 +148,8 @@ func makePart(text string, args ...interface{}) part {
 
 func paramToRaw(param interface{}) string {
 	switch p := param.(type) {
-	case int, float32, float64:
+	case float32, float64, int, int8, int16, int32, int64,
+		uint8, uint16, uint32, uint64:
 		return fmt.Sprintf("%v", p)
 	case *int:
 		if p == nil {

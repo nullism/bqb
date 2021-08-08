@@ -47,6 +47,8 @@ PARAMS: [7, "delete", "remove", 5]
 
 *Obvious warning: You should not use this for user input*
 
+*Less obvious warning: non bqb structs passed as arguments will result in a panic from the raw parser, such as `pg.Array`.*
+
 The `ToRaw()` call returns a string with the values filled in rather than parameterized
 
 ```golang
