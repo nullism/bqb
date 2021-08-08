@@ -90,7 +90,10 @@ PARAMS: [a b <nil> 1 2 <nil>]
 
 ## Custom Arguments
 
-The `ArgumentFormatter` interface allows custom conversions of arguments. For example:
+The `ArgumentFormatter` interface allows custom conversions of arguments.
+The only implementation is a single method: `Format() interface{}`.
+
+Example:
 
 ```golang
 import (
