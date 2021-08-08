@@ -16,6 +16,26 @@ func TestA(t *testing.T) {
 	println(sql)
 }
 
+type customEnclose struct {
+	Text  string
+	Left  string
+	Right string
+}
+
+func (c *customEnclose) Format() interface{} {
+	return c.Left + c.Text + c.Right
+}
+
+func TestArgumentFormatter(t *testing.T) {
+	q := New("?", &customEnclose{Left: "(", Right: ")", Text: "test"})
+	sql, _ := q.ToRaw()
+	want := "'(test)'"
+	if want != sql {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+
+}
+
 func TestArrays(t *testing.T) {
 	q := New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
 	sql, params, _ := q.ToSql()

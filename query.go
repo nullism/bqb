@@ -17,6 +17,10 @@ type Query struct {
 	Prepend string
 }
 
+type ArgumentFormatter interface {
+	Format() interface{}
+}
+
 type Json map[string]interface{}
 
 func makePart(text string, args ...interface{}) part {
@@ -91,6 +95,10 @@ func makePart(text string, args ...interface{}) part {
 			}
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, string(bytes))
+
+		case ArgumentFormatter:
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, v.Format())
 
 		case string, bool,
 			int, int8, int16, int32, int64,
