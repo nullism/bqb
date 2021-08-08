@@ -17,8 +17,8 @@ func TestA(t *testing.T) {
 }
 
 type customEnclose struct {
-	Text  string
 	Left  string
+	Text  string
 	Right string
 }
 
@@ -27,7 +27,7 @@ func (c *customEnclose) Format() interface{} {
 }
 
 func TestArgumentFormatter(t *testing.T) {
-	q := New("?", &customEnclose{Left: "(", Right: ")", Text: "test"})
+	q := New("?", &customEnclose{"(", "test", ")"})
 	sql, _ := q.ToRaw()
 	want := "'(test)'"
 	if want != sql {
