@@ -99,16 +99,18 @@ import (
     "github.com/lib/pq"
 )
 
-type PqArray struct {
-    Arr []string
+type ValWrap struct {
+    Left string
+    Text string
+    Right string
 }
 
-func (e *Enclose) Format() interface{} {
-    return pq.Array(e.Arr...)
+func (v *ValWrap) Format() interface{} {
+    return v.Left + v.Text + V.Right
 }
 
 func getQuery() {
-    q := New("Text: ?", &PqArray{[]string{"a","b","c"}]})
+    q := New("SELECT ?", &ValWrap{"{", "text", "}"})
     sql, params, _ := q.ToPsql()
     fmt.Printf("SQL: %v\nPARAMS: %v\n", sql, params)
 }
@@ -116,8 +118,8 @@ func getQuery() {
 
 Produces
 ```
-SQL: Text: $1
-PARAMS: [pq.Array{"a", "b", "c"}]
+SQL: SELECT $1
+PARAMS: ['{text}']
 ```
 
 ## Query Building
