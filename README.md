@@ -88,6 +88,38 @@ SQL: (?,?) (?) (?,?) (?)
 PARAMS: [a b <nil> 1 2 <nil>]
 ```
 
+## Custom Arguments
+
+The `ArgumentFormatter` interface allows custom conversions of arguments. For example:
+
+```golang
+import (
+    fmt
+
+    "github.com/lib/pq"
+)
+
+type PqArray struct {
+    Arr []string
+}
+
+func (e *Enclose) Format() interface{} {
+    return pq.Array(e.Arr...)
+}
+
+func getQuery() {
+    q := New("Text: ?", &PqArray{[]string{"a","b","c"}]})
+    sql, params, _ := q.ToPsql()
+    fmt.Printf("SQL: %v\nPARAMS: %v\n", sql, params)
+}
+```
+
+Produces
+```
+SQL: Text: $1
+PARAMS: [pq.Array{"a", "b", "c"}]
+```
+
 ## Query Building
 
 Since queries are built in an additive way by reference rather than value, it's easy to mutate a query without
