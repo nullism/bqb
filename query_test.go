@@ -36,8 +36,11 @@ func TestArrays(t *testing.T) {
 	if len(params) != 6 {
 		t.Errorf("invalid params")
 	}
-	q.Print()
-	println(sql)
+
+	want := "(?,?) (?) (?,?) (?)"
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
 }
 
 func TestSpace(t *testing.T) {
@@ -47,7 +50,7 @@ func TestSpace(t *testing.T) {
 	sql, _, _ := q.ToSql()
 	want := "a b"
 	if sql != want {
-		t.Errorf("want: %q, got: %q", want, sql)
+		t.Errorf("got: %q, want: %q", sql, want)
 	}
 }
 
@@ -316,6 +319,9 @@ func TestQuerySubquery(t *testing.T) {
 }
 
 func TestQueryTypes(t *testing.T) {
+
+	bool_ := true
+
 	int_ := 1
 	ints_ := []int{2, 2}
 
@@ -335,15 +341,16 @@ func TestQueryTypes(t *testing.T) {
 	json_ := Json{"a": 1}
 	var jsonp *Json
 
-	text := "i:? ? - s:? ? - ip:? ? ? ? - sp:? ? ? ? - j:? ?"
+	text := "b:? - i:? ? - s:? ? - ip:? ? ? ? - sp:? ? ? ? - j:? ?"
 	q := New(text,
+		bool_,
 		int_, ints_,
 		string_, strings_,
 		intp, intpn, intsp, intspn,
 		stringp, stringpn, stringsp, stringspn,
 		json_, jsonp)
 	sql, _ := q.ToRaw()
-	want := `i:1 2,2 - s:'s' 's1','s2' - ip:1 NULL 1,1 NULL - sp:'s' NULL 's','s' NULL - j:'{"a":1}' 'null'`
+	want := `b:true - i:1 2,2 - s:'s' 's1','s2' - ip:1 NULL 1,1 NULL - sp:'s' NULL 's','s' NULL - j:'{"a":1}' 'null'`
 	if want != sql {
 		t.Errorf("\ngot : %q\nwant: %q", sql, want)
 	}
