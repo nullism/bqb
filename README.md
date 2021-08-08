@@ -24,15 +24,15 @@ SELECT * FROM places WHERE id = ?
 PARAMS: [1234]
 ```
 
-## Postgres - ToPsql()
+## Postgres - ToPgsql()
 
-Just call the `ToPsql()` method instead of `ToSql()` to convert the query to Postgres syntax
+Just call the `ToPgsql()` method instead of `ToSql()` to convert the query to Postgres syntax
 
 ```golang
 q := bqb.New("DELETE FROM users").
     Space("WHERE id = ? OR name IN (?)", 7, []string{"delete", "remove"}).
     Space("LIMIT ?", 5)
-sql, params, err := q.ToPsql()
+sql, params, err := q.ToPgsql()
 ```
 
 Produces
@@ -114,7 +114,7 @@ func (v *ValWrap) Format() interface{} {
 
 func getQuery() {
     q := New("SELECT ?", &ValWrap{"{", "text", "}"})
-    sql, params, _ := q.ToPsql()
+    sql, params, _ := q.ToPgsql()
     fmt.Printf("SQL: %v\nPARAMS: %v\n", sql, params)
 }
 ```

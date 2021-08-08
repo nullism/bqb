@@ -6,14 +6,7 @@ import (
 )
 
 func TestA(t *testing.T) {
-	q := New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
-	sql, params, _ := q.ToSql()
 
-	if len(params) != 6 {
-		t.Errorf("invalid params")
-	}
-	q.Print()
-	println(sql)
 }
 
 type customEnclose struct {
@@ -240,19 +233,32 @@ func TestQueryBuilding(t *testing.T) {
 
 func TestQueryLiteralQ(t *testing.T) {
 	q := New("json->>field ?? val AND val = ?", "asdf")
-	sql, _, _ := q.ToPsql()
+	sql, _, _ := q.ToPgsql()
 	want := "json->>field ? val AND val = $1"
 	if want != sql {
 		t.Errorf("got: %q, want: %q", sql, want)
 	}
 }
 
-func TestQueryPostgres(t *testing.T) {
+func TestQueryMysql(t *testing.T) {
+	q := New("SELECT * FROM table WHERE a = ? AND b = ?", 1, "b")
+	sql, params, _ := q.ToMysql()
+	if len(params) != 2 {
+		t.Errorf("expected two parameters, got %v", len(params))
+	}
+
+	want := "SELECT * FROM table WHERE a = ? AND b = ?"
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+}
+
+func TestQueryPgsql(t *testing.T) {
 	q := New("SELECT name,").
 		Space("(SELECT * FROM other_table WHERE name = ?) as other_name", "test").
 		Space("FROM table LIMIT ?", 1)
 
-	sql, params, _ := q.ToPsql()
+	sql, params, _ := q.ToPgsql()
 	if len(params) != 2 {
 		t.Errorf("got incorrect param count: %v", len(params))
 	}
@@ -293,7 +299,7 @@ func TestQuerySubquery(t *testing.T) {
 		Space("AND name NOT LIKE ?", "admin%").
 		Space("LIMIT 1")
 
-	sql, params, err := q.ToPsql()
+	sql, params, err := q.ToPgsql()
 
 	if err != nil {
 		t.Errorf("got error: %v", err)

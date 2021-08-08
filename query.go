@@ -1,7 +1,6 @@
 package bqb
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -12,132 +11,12 @@ type part struct {
 }
 
 type Query struct {
-	dialect string
 	Parts   []part
 	Prepend string
 }
 
-type ArgumentFormatter interface {
-	Format() interface{}
-}
-
-type Json map[string]interface{}
-
-func makePart(text string, args ...interface{}) part {
-	tempPh := "XXX___XXX"
-	originalText := text
-	text = strings.ReplaceAll(text, "??", tempPh)
-
-	var newArgs []interface{}
-
-	for _, arg := range args {
-		switch v := arg.(type) {
-
-		case []int:
-			newPh := []string{}
-			for _, i := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, i)
-			}
-			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-
-		case []*int:
-			newPh := []string{}
-			for _, i := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, i)
-			}
-			if len(newPh) > 0 {
-				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-			} else {
-				text = strings.Replace(text, "?", paramPh, 1)
-				newArgs = append(newArgs, nil)
-			}
-
-		case []string:
-			newPh := []string{}
-			for _, s := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, s)
-			}
-			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-
-		case []*string:
-			newPh := []string{}
-			for _, s := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, s)
-			}
-			if len(newPh) > 0 {
-				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-			} else {
-				text = strings.Replace(text, "?", paramPh, 1)
-				newArgs = append(newArgs, nil)
-			}
-
-		case *Query:
-			sql, params, _ := v.toSql()
-			text = strings.Replace(text, "?", sql, 1)
-			newArgs = append(newArgs, params...)
-
-		case Json:
-			bytes, err := json.Marshal(v)
-			if err != nil {
-				panic(fmt.Sprintf("cann jsonify struct: %v", err))
-			}
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, string(bytes))
-
-		case *Json:
-			bytes, err := json.Marshal(v)
-			if err != nil {
-				panic(fmt.Sprintf("cann jsonify struct: %v", err))
-			}
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, string(bytes))
-
-		case ArgumentFormatter:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v.Format())
-
-		case string, bool,
-			int, int8, int16, int32, int64,
-			uint8, uint16, uint32, uint64,
-			float32, float64:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, arg)
-
-		case nil, *string, *int:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v)
-
-		default:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v)
-		}
-	}
-	extraCount := strings.Count(text, "?")
-	if extraCount > 0 {
-		panic(fmt.Sprintf("extra ? in text: %v", originalText))
-	}
-
-	paramCount := strings.Count(text, paramPh)
-	if paramCount < len(newArgs) {
-		panic(fmt.Sprintf("missing ? in text: %v", originalText))
-	}
-
-	text = strings.ReplaceAll(text, tempPh, "??")
-
-	return part{
-		Text:   text,
-		Params: newArgs,
-	}
-}
-
 func New(text string, args ...interface{}) *Query {
-	q := &Query{
-		dialect: SQL,
-	}
+	q := &Query{}
 	q.Parts = append(q.Parts, makePart(text, args...))
 	return q
 }
@@ -148,16 +27,8 @@ func Empty(prep ...string) *Query {
 	}
 }
 
-func (q *Query) Space(text string, args ...interface{}) *Query {
-	return q.Join(" ", text, args...)
-}
-
 func (q *Query) And(text string, args ...interface{}) *Query {
 	return q.Join(" AND ", text, args...)
-}
-
-func (q *Query) Or(text string, args ...interface{}) *Query {
-	return q.Join(" OR ", text, args...)
 }
 
 func (q *Query) Comma(text string, args ...interface{}) *Query {
@@ -178,6 +49,14 @@ func (q *Query) Join(sep, text string, args ...interface{}) *Query {
 	return q
 }
 
+func (q *Query) Or(text string, args ...interface{}) *Query {
+	return q.Join(" OR ", text, args...)
+}
+
+func (q *Query) Space(text string, args ...interface{}) *Query {
+	return q.Join(" ", text, args...)
+}
+
 func (q *Query) Print() {
 	sql, params, err := q.ToSql()
 	fmt.Printf("SQL: %v\n", sql)
@@ -185,24 +64,25 @@ func (q *Query) Print() {
 	fmt.Printf("ERROR: %v\n", err)
 }
 
-func (q *Query) ToSql() (string, []interface{}, error) {
+func (q *Query) ToMysql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
-	if err != nil {
-		return "", nil, err
-	}
-
-	return dialectReplace(q.dialect, sql, params), params, nil
+	return dialectReplace(MYSQL, sql, params), params, err
 }
 
-func (q *Query) ToPsql() (string, []interface{}, error) {
-	q.dialect = PGSQL
-	return q.ToSql()
+func (q *Query) ToPgsql() (string, []interface{}, error) {
+	sql, params, err := q.toSql()
+	return dialectReplace(PGSQL, sql, params), params, err
 }
 
 func (q *Query) ToRaw() (string, error) {
-	q.dialect = RAW
-	sql, _, err := q.ToSql()
+	sql, params, err := q.toSql()
+	sql = dialectReplace(RAW, sql, params)
 	return sql, err
+}
+
+func (q *Query) ToSql() (string, []interface{}, error) {
+	sql, params, err := q.toSql()
+	return dialectReplace(SQL, sql, params), params, err
 }
 
 func (q *Query) toSql() (string, []interface{}, error) {
