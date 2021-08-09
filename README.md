@@ -176,8 +176,7 @@ if !getName && !getId {
     sel.Comma("*")
 }
 
-from := bqb.Optional("FROM")
-from.Space("my_table")
+from := bqb.New("FROM my_table")
 
 where := bqb.Optional("WHERE")
 
