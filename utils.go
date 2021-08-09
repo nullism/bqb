@@ -39,7 +39,7 @@ func dialectReplace(dialect string, sql string, params []interface{}) (string, e
 	return sql, nil
 }
 
-func makePart(text string, args ...interface{}) part {
+func makePart(text string, args ...interface{}) QueryPart {
 	tempPh := "XXX___XXX"
 	originalText := text
 	text = strings.ReplaceAll(text, "??", tempPh)
@@ -137,7 +137,7 @@ func makePart(text string, args ...interface{}) part {
 
 	text = strings.ReplaceAll(text, tempPh, "??")
 
-	return part{
+	return QueryPart{
 		Text:   text,
 		Params: newArgs,
 	}

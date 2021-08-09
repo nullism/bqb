@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-type part struct {
+type QueryPart struct {
 	Text   string
 	Params []interface{}
 }
 
 type Query struct {
-	Parts   []part
+	Parts   []QueryPart
 	Prepend string
 }
 
