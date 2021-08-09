@@ -11,19 +11,23 @@ type QueryPart struct {
 }
 
 type Query struct {
-	Parts   []QueryPart
-	Prepend string
+	Parts             []QueryPart
+	ConditionalPrefix string
 }
 
 func New(text string, args ...interface{}) *Query {
-	q := &Query{}
+	q := Q()
 	q.Parts = append(q.Parts, makePart(text, args...))
 	return q
 }
 
-func Empty(prep ...string) *Query {
+func Q() *Query {
+	return &Query{}
+}
+
+func Empty(prep string) *Query {
 	return &Query{
-		Prepend: strings.Join(prep, " "),
+		ConditionalPrefix: prep,
 	}
 }
 
@@ -92,8 +96,8 @@ func (q *Query) toSql() (string, []interface{}, error) {
 	var sql string
 	var params []interface{}
 
-	if q.Prepend != "" && len(q.Parts) > 0 {
-		sql = q.Prepend + " "
+	if q.ConditionalPrefix != "" && len(q.Parts) > 0 {
+		sql = q.ConditionalPrefix + " "
 	}
 
 	for _, p := range q.Parts {

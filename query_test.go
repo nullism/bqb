@@ -228,7 +228,7 @@ func TestQueryBuilding(t *testing.T) {
 
 	where := Empty("WHERE")
 
-	adultCond := Empty()
+	adultCond := Q()
 	adultCond.And("name = ?", "adult")
 	adultCond.And("age > ?", 20)
 

@@ -155,7 +155,7 @@ SELECT id,age,email
 
 ### Advanced Example
 
-The `Empty()` function returns a query that resolves to an empty string if no query parts have
+The `Empty(string)` function returns a query that resolves to an empty string if no query parts have
 been added via methods on the query instance. For example `q := Empty("SELECT")` will resolve to
 an empty string unless parts have been added by one of the methods,
 e.g `q.Space("* FROM my_table")` would make `q.ToSql()` resolve to `SELECT * FROM my_table`.
@@ -182,8 +182,7 @@ from.Space("my_table")
 where := bqb.Empty("WHERE")
 
 if filterAdult {
-    adultCond := bqb.Empty().
-        And("name = ?", "adult")
+    adultCond := bqb.New("name = ?", "adult")
     if ageCheck {
         adultCond.And("age > ?", 20)
     }
