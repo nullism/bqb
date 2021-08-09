@@ -11,8 +11,8 @@ type QueryPart struct {
 }
 
 type Query struct {
-	Parts             []QueryPart
-	ConditionalPrefix string
+	Parts          []QueryPart
+	OptionalPrefix string
 }
 
 func New(text string, args ...interface{}) *Query {
@@ -27,7 +27,7 @@ func Q() *Query {
 
 func Optional(prefix string) *Query {
 	return &Query{
-		ConditionalPrefix: prefix,
+		OptionalPrefix: prefix,
 	}
 }
 
@@ -96,8 +96,8 @@ func (q *Query) toSql() (string, []interface{}, error) {
 	var sql string
 	var params []interface{}
 
-	if q.ConditionalPrefix != "" && len(q.Parts) > 0 {
-		sql = q.ConditionalPrefix + " "
+	if q.OptionalPrefix != "" && len(q.Parts) > 0 {
+		sql = q.OptionalPrefix + " "
 	}
 
 	for _, p := range q.Parts {
