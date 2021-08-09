@@ -193,7 +193,7 @@ if filterChild {
     where.Or("(name = ? AND age < ?)", "youth", 21)
 }
 
-q := bqb.New("? ? ? LIMIT ?", sel, from, where, 10)
+q := bqb.New("? ? ?", sel, from, where).Space("LIMIT ?", 10)
 ```
 
 Assuming all values are true, the query would look like:
