@@ -25,9 +25,9 @@ func Q() *Query {
 	return &Query{}
 }
 
-func Empty(prep string) *Query {
+func Optional(prefix string) *Query {
 	return &Query{
-		ConditionalPrefix: prep,
+		ConditionalPrefix: prefix,
 	}
 }
 

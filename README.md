@@ -155,14 +155,14 @@ SELECT id,age,email
 
 ### Advanced Example
 
-The `Empty(string)` function returns a query that resolves to an empty string if no query parts have
-been added via methods on the query instance. For example `q := Empty("SELECT")` will resolve to
+The `Optional(string)` function returns a query that resolves to an empty string if no query parts have
+been added via methods on the query instance. For example `q := Optional("SELECT")` will resolve to
 an empty string unless parts have been added by one of the methods,
 e.g `q.Space("* FROM my_table")` would make `q.ToSql()` resolve to `SELECT * FROM my_table`.
 
 ```golang
 
-sel := bqb.Empty("SELECT")
+sel := bqb.Optional("SELECT")
 
 if getName {
     sel.Comma("name")
@@ -176,10 +176,10 @@ if !getName && !getId {
     sel.Comma("*")
 }
 
-from := bqb.Empty("FROM")
+from := bqb.Optional("FROM")
 from.Space("my_table")
 
-where := bqb.Empty("WHERE")
+where := bqb.Optional("WHERE")
 
 if filterAdult {
     adultCond := bqb.New("name = ?", "adult")
@@ -228,7 +228,7 @@ For example `q.And("abc")` will add `AND abc` to the query.
 Take the following
 
 ```golang
-q := bqb.Empty("WHERE")
+q := bqb.Optional("WHERE")
 q.Space("1 = 2") // query is now WHERE 1 = 2
 q.And("b") // query is now WHERE 1 = 2 AND b
 q.Or("c") // query is now WHERE 1 = 2 AND b OR c
@@ -284,7 +284,7 @@ The same logic can be achieved with `bqb` a bit more cleanly
 
 ```golang
 q := bqb.New("SELECT * FROM my_table")
-where := bqb.Empty("WHERE")
+where := bqb.Optional("WHERE")
 if filterAge {
     where.And("age > ?", 21)
 }
@@ -354,7 +354,7 @@ Contrast that with the `bqb` approach:
 
 q := bqb.New("SELECT name FROM users")
 
-where := bqb.Empty("WHERE")
+where := bqb.Optional("WHERE")
 
 if checkAge {
     where.And("age > ?", 21)

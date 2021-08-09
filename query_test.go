@@ -90,7 +90,7 @@ func TestConcat(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	sel := Empty("you should not see this")
+	sel := Optional("you should not see this")
 	sql, _ := sel.ToRaw()
 
 	if sql != "" {
@@ -218,15 +218,15 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryBuilding(t *testing.T) {
-	sel := Empty("SELECT")
+	sel := Optional("SELECT")
 
 	sel.Comma("name")
 	sel.Comma("id")
 
-	from := Empty("FROM")
+	from := Optional("FROM")
 	from.Space("my_table")
 
-	where := Empty("WHERE")
+	where := Optional("WHERE")
 
 	adultCond := Q()
 	adultCond.And("name = ?", "adult")
