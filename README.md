@@ -81,7 +81,7 @@ Arguments of type `[]string`,`[]*string` or `[]int`,`[]*int` are automatically e
 
 ```golang
     q := bqb.New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
-	sql, params, _ := q.ToSql()
+    sql, params, _ := q.ToSql()
 ```
 
 Produces
