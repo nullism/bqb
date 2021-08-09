@@ -1,6 +1,7 @@
 package bqb
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -129,11 +130,17 @@ func TestParamsFunc(t *testing.T) {
 	}
 
 	q = New("?", func(x int) int { return x })
-	sql, _ := q.ToRaw()
+	sql, err := q.ToRaw()
+	if err == nil {
+		t.Errorf("got nil error for invalid raw parameter")
+	}
 
-	want := "'func(int) int'"
-	if want != sql {
-		t.Errorf("got: %q, want: %q", sql, want)
+	if !strings.Contains(fmt.Sprint(err), "func(int) int") {
+		t.Errorf("got incorrect error %v", err)
+	}
+
+	if sql != "" {
+		t.Errorf("got non-empty value from ToRaw(): %q", sql)
 	}
 
 }

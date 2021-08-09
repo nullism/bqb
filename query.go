@@ -66,23 +66,26 @@ func (q *Query) Print() {
 
 func (q *Query) ToMysql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
-	return dialectReplace(MYSQL, sql, params), params, err
+	sql, err = dialectReplace(MYSQL, sql, params)
+	return sql, params, err
 }
 
 func (q *Query) ToPgsql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
-	return dialectReplace(PGSQL, sql, params), params, err
+	sql, err = dialectReplace(PGSQL, sql, params)
+	return sql, params, err
 }
 
 func (q *Query) ToRaw() (string, error) {
 	sql, params, err := q.toSql()
-	sql = dialectReplace(RAW, sql, params)
+	sql, err = dialectReplace(RAW, sql, params)
 	return sql, err
 }
 
 func (q *Query) ToSql() (string, []interface{}, error) {
 	sql, params, err := q.toSql()
-	return dialectReplace(SQL, sql, params), params, err
+	sql, err = dialectReplace(SQL, sql, params)
+	return sql, params, err
 }
 
 func (q *Query) toSql() (string, []interface{}, error) {

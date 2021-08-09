@@ -2,6 +2,7 @@ package bqb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -21,10 +22,14 @@ type ArgumentFormatter interface {
 
 type Json map[string]interface{}
 
-func dialectReplace(dialect string, sql string, params []interface{}) string {
+func dialectReplace(dialect string, sql string, params []interface{}) (string, error) {
 	for i, param := range params {
 		if dialect == RAW {
-			sql = strings.Replace(sql, paramPh, paramToRaw(param), 1)
+			p, err := paramToRaw(param)
+			if err != nil {
+				return "", err
+			}
+			sql = strings.Replace(sql, paramPh, p, 1)
 		} else if dialect == MYSQL || dialect == SQL {
 			sql = strings.Replace(sql, paramPh, "?", 1)
 		} else if dialect == PGSQL {
@@ -32,7 +37,7 @@ func dialectReplace(dialect string, sql string, params []interface{}) string {
 			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
 		}
 	}
-	return sql
+	return sql, nil
 }
 
 func makePart(text string, args ...interface{}) part {
@@ -139,28 +144,28 @@ func makePart(text string, args ...interface{}) part {
 	}
 }
 
-func paramToRaw(param interface{}) string {
+func paramToRaw(param interface{}) (string, error) {
 	switch p := param.(type) {
 	case bool:
-		return fmt.Sprintf("%v", p)
+		return fmt.Sprintf("%v", p), nil
 	case float32, float64, int, int8, int16, int32, int64,
 		uint8, uint16, uint32, uint64:
-		return fmt.Sprintf("%v", p)
+		return fmt.Sprintf("%v", p), nil
 	case *int:
 		if p == nil {
-			return "NULL"
+			return "NULL", nil
 		}
-		return fmt.Sprintf("%v", *p)
+		return fmt.Sprintf("%v", *p), nil
 	case string:
-		return fmt.Sprintf("'%v'", p)
+		return fmt.Sprintf("'%v'", p), nil
 	case *string:
 		if p == nil {
-			return "NULL"
+			return "NULL", nil
 		}
-		return fmt.Sprintf("'%v'", *p)
+		return fmt.Sprintf("'%v'", *p), nil
 	case nil:
-		return "NULL"
+		return "NULL", nil
 	default:
-		return fmt.Sprintf("'%T'", p)
+		return "", errors.New(fmt.Sprintf("unsupported type %T", p))
 	}
 }
