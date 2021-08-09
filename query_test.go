@@ -119,16 +119,23 @@ func TestParamsExtra(t *testing.T) {
 }
 
 func TestParamsFunc(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "cannot convert") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
+	f := func(text string, args ...interface{}) interface{} {
+		return strings.Contains(text, "TEST")
+	}
+	q := New("TEST ?", f)
+	_, params, _ := q.ToSql()
+	if params[0] != true {
+		t.Errorf("got: %v, want: %v", params[0], true)
+	}
 
-	New("?", func() {}).ToRaw()
-	t.Errorf("was able to convert function arg")
+	q = New("?", func(x int) int { return x })
+	sql, _ := q.ToRaw()
+
+	want := "'func(int) int'"
+	if want != sql {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+
 }
 
 func TestParamsJson(t *testing.T) {
@@ -280,12 +287,12 @@ func TestQueryPrint(t *testing.T) {
 func TestQueryRaw(t *testing.T) {
 
 	q := New(
-		"int:? string:? []int:? []string:? Query:? Json:? nil:?",
-		1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), Json{"6": 6}, nil,
+		"bool:? float:? int:? string:? []int:? []string:? Query:? Json:? nil:?",
+		true, 1.5, 1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), Json{"6": 6}, nil,
 	)
 	sql, _ := q.ToRaw()
 
-	want := "int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{\"6\":6}' nil:NULL"
+	want := "bool:true float:1.5 int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{\"6\":6}' nil:NULL"
 	if want != sql {
 		t.Errorf("got: %q, want: %q", sql, want)
 	}

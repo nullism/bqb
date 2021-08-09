@@ -112,6 +112,10 @@ func makePart(text string, args ...interface{}) part {
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, v.Format())
 
+		case func(string, ...interface{}) interface{}:
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, v(originalText, args))
+
 		default:
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, v)
@@ -157,6 +161,6 @@ func paramToRaw(param interface{}) string {
 	case nil:
 		return "NULL"
 	default:
-		panic(fmt.Sprintf("cannot convert type %T", p))
+		return fmt.Sprintf("'%T'", p)
 	}
 }
