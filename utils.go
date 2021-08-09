@@ -165,6 +165,6 @@ func paramToRaw(param interface{}) (string, error) {
 	case nil:
 		return "NULL", nil
 	default:
-		return "", fmt.Errorf("unsupported type %T", p)
+		return "", fmt.Errorf("unsupported type for Raw query: %T", p)
 	}
 }
