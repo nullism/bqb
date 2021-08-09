@@ -2,7 +2,6 @@ package bqb
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -166,6 +165,6 @@ func paramToRaw(param interface{}) (string, error) {
 	case nil:
 		return "NULL", nil
 	default:
-		return "", errors.New(fmt.Sprintf("unsupported type %T", p))
+		return "", fmt.Errorf("unsupported type %T", p)
 	}
 }
