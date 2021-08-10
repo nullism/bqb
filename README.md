@@ -77,54 +77,39 @@ int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{"6":6}' nil:NULL
 
 ## Query IN
 
-Arguments of type `[]string`,`[]*string` or `[]int`,`[]*int` are automatically expanded.
+Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, or `[]interface{}` are automatically expanded.
 
 ```golang
-    q := bqb.New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
+    q := bqb.New(
+        "strs:(?) *strs:(?) ints:(?) *ints:(?) intfs:(?)",
+        []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{}, []interface{}{3, true},
+    )
     sql, params, _ := q.ToSql()
 ```
 
 Produces
 ```
-SQL: (?,?) (?) (?,?) (?)
-PARAMS: [a b <nil> 1 2 <nil>]
+SQL: strs:(?,?) *strs:(?) ints:(?,?) *ints:(?) intfs:(?,?)
+PARAMS: [a b <nil> 1 2 <nil> 3 true]
 ```
 
-## Custom Arguments
+## Json Arguments
 
-The `ArgumentFormatter` interface allows custom conversions of arguments.
-The only implementation is a single method: `Format() interface{}`.
-
-Example:
+There are two helper structs, `JsonMap` and `JsonList` to make JSON conversion a little simpler.
 
 ```golang
-import (
-    fmt
 
-    "github.com/lib/pq"
-)
-
-type ValWrap struct {
-    Left string
-    Text string
-    Right string
-}
-
-func (v *ValWrap) Format() interface{} {
-    return v.Left + v.Text + V.Right
-}
-
-func getQuery() {
-    q := New("SELECT ?", &ValWrap{"{", "text", "}"})
-    sql, params, _ := q.ToPgsql()
-    fmt.Printf("SQL: %v\nPARAMS: %v\n", sql, params)
-}
+sql, err := bqb.New(
+    "INSERT INTO my_table (json_map, json_list) VALUES (?, ?)",
+    JsonMap{"a": 1, "b": []string{"a","b","c"}},
+    JsonList{"string",1,true},
+).ToRaw()
 ```
 
 Produces
-```
-SQL: SELECT $1
-PARAMS: ['{text}']
+```sql
+INSERT INTO my_table (json_map, json_list)
+VALUES ('{"a": 1, "b": ["a","b","c"]}', '["string",1,true]')
 ```
 
 ## Query Building
@@ -242,7 +227,7 @@ Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, or `[]string`
 
 ## Is there more documentation?
 
-It's not really necessary because the API is so tiny.
+It's not really necessary because the API is so tiny and public methods are documented in code.
 Most of the documentation will be around how to use SQL.
 However, you can check out the [tests](./query_test.go) to see the variety of usages.
 
@@ -254,15 +239,20 @@ For example let's say we use the string builder way to build the following:
 
 ```golang
 var params []interface{}
-q := "SELECT * FROM my_table WHERE "
+var whereParts []string
+q := "SELECT * FROM my_table "
 if filterAge {
     params = append(params, 21)
-    q += fmt.Sprintf("age > $%d ", len(params))
+    whereParts = append(whereParts, fmt.Sprintf("age > $%d ", len(params)))
 }
 
 if filterBobs {
     params = append(params, "Bob%")
-    q += fmt.Sprintf("name LIKE $%d ", len(params))
+    whereParts = append(whereParts, fmt.Sprintf("name LIKE $%d ", len(params)))
+}
+
+if len(whereParts) > 0 {
+    q += strings.Join(whereParts, " AND ") + " "
 }
 
 if limit != nil {
@@ -274,8 +264,8 @@ if limit != nil {
 ```
 
 Some problems with that approach
-1. If `filterBobs` and `filterAge` are false, the query has an empty where clause
-2. You must remember to include a trailing space for each clause
+1. You must perform a string join for the various parts of the where clause
+2. You must remember to include a trailing or leading space for each clause
 3. You have to keep track of parameter count (for Postgres anyway)
 4. It's kind of ugly
 

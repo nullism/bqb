@@ -10,26 +10,6 @@ func TestA(t *testing.T) {
 
 }
 
-type customEnclose struct {
-	Left  string
-	Text  string
-	Right string
-}
-
-func (c *customEnclose) Format() interface{} {
-	return c.Left + c.Text + c.Right
-}
-
-func TestArgumentFormatter(t *testing.T) {
-	q := New("?", &customEnclose{"(", "test", ")"})
-	sql, _ := q.ToRaw()
-	want := "'(test)'"
-	if want != sql {
-		t.Errorf("got: %q, want: %q", sql, want)
-	}
-
-}
-
 func TestArrays(t *testing.T) {
 	q := New("(?) (?) (?) (?)", []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{})
 	sql, params, _ := q.ToSql()
@@ -120,16 +100,7 @@ func TestParamsExtra(t *testing.T) {
 }
 
 func TestParamsFunc(t *testing.T) {
-	f := func(text string, args ...interface{}) interface{} {
-		return strings.Contains(text, "TEST")
-	}
-	q := New("TEST ?", f)
-	_, params, _ := q.ToSql()
-	if params[0] != true {
-		t.Errorf("got: %v, want: %v", params[0], true)
-	}
-
-	q = New("?", func(x int) int { return x })
+	q := New("?", func(x int) int { return x })
 	sql, err := q.ToRaw()
 	if err == nil {
 		t.Errorf("got nil error for invalid raw parameter")
@@ -145,8 +116,71 @@ func TestParamsFunc(t *testing.T) {
 
 }
 
+func TestParamsInterfaceList(t *testing.T) {
+	sql, err := New("?", []interface{}{"a", 1, true}).ToRaw()
+	if err != nil {
+		t.Errorf("got error %v", err)
+	}
+
+	want := "'a',1,true"
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+}
+
 func TestParamsJson(t *testing.T) {
-	q := New("INSERT INTO foo (json) VALUES (?)", &Json{"a": "test", "b": []int{1, 2}})
+
+	sql, _ := New(
+		"INSERT INTO my_table (json_map,json_list) VALUES (?,?)",
+		JsonMap{"a": 1, "b": []string{"a", "b"}},
+		JsonList{"string", 1, true},
+	).ToRaw()
+
+	want := `INSERT INTO my_table (json_map,json_list) ` +
+		`VALUES ('{"a":1,"b":["a","b"]}','["string",1,true]')`
+	if sql != want {
+		t.Errorf("\n got: %q\nwant: %q", sql, want)
+	}
+
+	q := New("INSERT INTO foo (json) VALUES (?)", JsonMap{"a": "test", "b": []int{1, 2}})
+
+	sql, params, _ := q.ToSql()
+	want = "INSERT INTO foo (json) VALUES (?)"
+	if sql != want {
+		t.Errorf("want: %q, got: %q", want, sql)
+	}
+
+	pwant := `{"a":"test","b":[1,2]}`
+	if params[0] != pwant {
+		t.Errorf("want: %q, got: %q", pwant, params[0])
+	}
+
+	q = New("a = ?", JsonList{"a", 1, true})
+	sql, params, _ = q.ToSql()
+	jlpwant := `["a",1,true]`
+
+	if params[0] != jlpwant {
+		t.Errorf("got: %q, want: %q", params[0], jlpwant)
+	}
+
+	jlwant := "a = ?"
+	if sql != jlwant {
+		t.Errorf("got: %q, want: %q", sql, jlwant)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(r.(string), "jsonify") {
+				t.Errorf("invalid panic for missing params: %v", r)
+			}
+		}
+	}()
+	New("?", JsonMap{"a": func() {}})
+	t.Errorf("didn't panic")
+}
+
+func TestParamsJsonPointer(t *testing.T) {
+	q := New("INSERT INTO foo (json) VALUES (?)", &JsonMap{"a": "test", "b": []int{1, 2}})
 
 	sql, params, _ := q.ToSql()
 	want := "INSERT INTO foo (json) VALUES (?)"
@@ -159,6 +193,19 @@ func TestParamsJson(t *testing.T) {
 		t.Errorf("want: %q, got: %q", pwant, params[0])
 	}
 
+	q = New("a = ?", &JsonList{"a", 1, 2})
+	sql, params, _ = q.ToSql()
+	jlpwant := `["a",1,2]`
+
+	if params[0] != jlpwant {
+		t.Errorf("got: %q, want: %q", params[0], jlpwant)
+	}
+
+	jlwant := "a = ?"
+	if sql != jlwant {
+		t.Errorf("got: %q, want: %q", sql, jlwant)
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			if !strings.Contains(r.(string), "jsonify") {
@@ -166,20 +213,7 @@ func TestParamsJson(t *testing.T) {
 			}
 		}
 	}()
-	New("?", &Json{"a": func() {}})
-	t.Errorf("didn't panic")
-
-}
-
-func TestParamsJsonP(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "jsonify") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
-	New("?", Json{"a": func() {}})
+	New("?", &JsonMap{"a": func() {}})
 	t.Errorf("didn't panic")
 }
 
@@ -295,7 +329,7 @@ func TestQueryRaw(t *testing.T) {
 
 	q := New(
 		"bool:? float:? int:? string:? []int:? []string:? Query:? Json:? nil:?",
-		true, 1.5, 1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), Json{"6": 6}, nil,
+		true, 1.5, 1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), JsonMap{"6": 6}, nil,
 	)
 	sql, _ := q.ToRaw()
 
@@ -352,8 +386,8 @@ func TestQueryTypes(t *testing.T) {
 	stringsp := []*string{&string_, &string_}
 	var stringspn []*string
 
-	json_ := Json{"a": 1}
-	var jsonp *Json
+	json_ := JsonMap{"a": 1}
+	var jsonp *JsonMap
 
 	text := "b:? - i:? ? - s:? ? - ip:? ? ? ? - sp:? ? ? ? - j:? ?"
 	q := New(text,

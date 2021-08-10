@@ -15,11 +15,9 @@ const (
 	paramPh = "{{xX_PARAM_Xx}}"
 )
 
-type ArgumentFormatter interface {
-	Format() interface{}
-}
+type JsonMap map[string]interface{}
 
-type Json map[string]interface{}
+type JsonList []interface{}
 
 func dialectReplace(dialect string, sql string, params []interface{}) (string, error) {
 	for i, param := range params {
@@ -91,12 +89,20 @@ func makePart(text string, args ...interface{}) QueryPart {
 				newArgs = append(newArgs, nil)
 			}
 
+		case []interface{}:
+			newPh := []string{}
+			for _, s := range v {
+				newPh = append(newPh, paramPh)
+				newArgs = append(newArgs, s)
+			}
+			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+
 		case *Query:
 			sql, params, _ := v.toSql()
 			text = strings.Replace(text, "?", sql, 1)
 			newArgs = append(newArgs, params...)
 
-		case Json:
+		case JsonMap, JsonList:
 			bytes, err := json.Marshal(v)
 			if err != nil {
 				panic(fmt.Sprintf("cann jsonify struct: %v", err))
@@ -104,21 +110,13 @@ func makePart(text string, args ...interface{}) QueryPart {
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, string(bytes))
 
-		case *Json:
+		case *JsonMap, *JsonList:
 			bytes, err := json.Marshal(v)
 			if err != nil {
 				panic(fmt.Sprintf("cann jsonify struct: %v", err))
 			}
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, string(bytes))
-
-		case ArgumentFormatter:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v.Format())
-
-		case func(string, ...interface{}) interface{}:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v(originalText, args))
 
 		default:
 			text = strings.Replace(text, "?", paramPh, 1)
@@ -127,12 +125,12 @@ func makePart(text string, args ...interface{}) QueryPart {
 	}
 	extraCount := strings.Count(text, "?")
 	if extraCount > 0 {
-		panic(fmt.Sprintf("extra ? in text: %v", originalText))
+		panic(fmt.Sprintf("extra ? in text: %v (%d args)", originalText, len(newArgs)))
 	}
 
 	paramCount := strings.Count(text, paramPh)
 	if paramCount < len(newArgs) {
-		panic(fmt.Sprintf("missing ? in text: %v", originalText))
+		panic(fmt.Sprintf("missing ? in text: %v (%d args)", originalText, len(newArgs)))
 	}
 
 	text = strings.ReplaceAll(text, tempPh, "??")
