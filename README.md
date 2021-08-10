@@ -63,14 +63,14 @@ a = 'my a', b = 1234, c = NULL
 
 ```golang
 q := bqb.New(
-    "int:? string:? []int:? []string:? Query:? Json:? nil:?",
-    1, "2", []int{3, 3}, []string{"4", "4"}, bqb.New("5"), bqb.Json{"6": 6}, nil,
+    "int:? string:? []int:? []string:? Query:? JsonMap:? nil:? []intf:?",
+    1, "2", []int{3, 3}, []string{"4", "4"}, bqb.New("5"), bqb.JsonMap{"6": 6}, nil, []interface{}{"a",1,true},
 )
 sql, _ := q.ToRaw()
 ```
 Produces
 ```
-int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{"6":6}' nil:NULL
+int:1 string:'2' []int:3,3 []string:'4','4' Query:5 JsonMap:'{"6":6}' nil:NULL []intf:'a',1,true
 ```
 
 ## Query IN
