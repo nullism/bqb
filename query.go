@@ -1,6 +1,7 @@
 package bqb
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -37,22 +38,34 @@ func Optional(prefix string) *Query {
 
 // And joins the current QueryPart to the previous QueryPart with ' AND '
 func (q *Query) And(text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
 	return q.Join(" AND ", text, args...)
 }
 
 // Comma joins the current QueryPart to the previous QueryPart with a comma
 func (q *Query) Comma(text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
 	return q.Join(",", text, args...)
 }
 
 // Concat concatenates the current QueryPart to the previous QueryPart with a
 // zero space string
 func (q *Query) Concat(text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
 	return q.Join("", text, args...)
 }
 
 // Join joins the current QueryPart to the previous QueryPart with `sep`
 func (q *Query) Join(sep, text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
 	if len(q.Parts) > 0 {
 		q.Parts = append(q.Parts, makePart(sep+text, args...))
 	} else {
@@ -62,14 +75,20 @@ func (q *Query) Join(sep, text string, args ...interface{}) *Query {
 	return q
 }
 
-// Or joins the current QueryPart to the previous QueryPart with ' OR '
-func (q *Query) Or(text string, args ...interface{}) *Query {
-	return q.Join(" OR ", text, args...)
+// Len returns the length of Query.Parts
+func (q *Query) Len() int {
+	if q == nil {
+		return 0
+	}
+	return len(q.Parts)
 }
 
-// Space joins the current QueryPart to the previous QueryPart with a space
-func (q *Query) Space(text string, args ...interface{}) *Query {
-	return q.Join(" ", text, args...)
+// Or joins the current QueryPart to the previous QueryPart with ' OR '
+func (q *Query) Or(text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
+	return q.Join(" OR ", text, args...)
 }
 
 // Print outputs the sql, parameters, and errors of a Query
@@ -80,34 +99,58 @@ func (q *Query) Print() {
 	fmt.Printf("ERROR: %v\n", err)
 }
 
+// Space joins the current QueryPart to the previous QueryPart with a space
+func (q *Query) Space(text string, args ...interface{}) *Query {
+	if q == nil {
+		return New(text, args...)
+	}
+	return q.Join(" ", text, args...)
+}
+
 func (q *Query) ToMysql() (string, []interface{}, error) {
-	sql, params, _ := q.toSql()
-	sql, err := dialectReplace(MYSQL, sql, params)
+	sql, params, err := q.toSql()
+	if err != nil {
+		return "", nil, err
+	}
+	sql, err = dialectReplace(MYSQL, sql, params)
 	return sql, params, err
 }
 
 // ToPgsql returns the sql placeholders with dollarsign format used by postgres
 func (q *Query) ToPgsql() (string, []interface{}, error) {
-	sql, params, _ := q.toSql()
-	sql, err := dialectReplace(PGSQL, sql, params)
+	sql, params, err := q.toSql()
+	if err != nil {
+		return "", nil, err
+	}
+	sql, err = dialectReplace(PGSQL, sql, params)
 	return sql, params, err
 }
 
 // ToRaw returns a string which the parameters have been resolved added
 // as correctly as possible.
 func (q *Query) ToRaw() (string, error) {
-	sql, params, _ := q.toSql()
-	sql, err := dialectReplace(RAW, sql, params)
+	sql, params, err := q.toSql()
+	if err != nil {
+		return "", err
+	}
+
+	sql, err = dialectReplace(RAW, sql, params)
 	return sql, err
 }
 
 func (q *Query) ToSql() (string, []interface{}, error) {
-	sql, params, _ := q.toSql()
-	sql, err := dialectReplace(SQL, sql, params)
+	sql, params, err := q.toSql()
+	if err != nil {
+		return "", nil, err
+	}
+	sql, err = dialectReplace(SQL, sql, params)
 	return sql, params, err
 }
 
 func (q *Query) toSql() (string, []interface{}, error) {
+	if q == nil {
+		return "", nil, errors.New("cannot get sql on nil Query")
+	}
 	var sql string
 	var params []interface{}
 
