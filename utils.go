@@ -98,6 +98,11 @@ func makePart(text string, args ...interface{}) QueryPart {
 			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
 
 		case *Query:
+			if v == nil {
+				text = strings.Replace(text, "?", paramPh, 1)
+				newArgs = append(newArgs, nil)
+				continue
+			}
 			sql, params, _ := v.toSql()
 			text = strings.Replace(text, "?", sql, 1)
 			newArgs = append(newArgs, params...)
