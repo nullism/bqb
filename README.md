@@ -99,15 +99,15 @@ There are two helper structs, `JsonMap` and `JsonList` to make JSON conversion a
 
 sql, err := bqb.New(
     "INSERT INTO my_table (json_map, json_list) VALUES (?, ?)",
-    JsonMap{"a": 1, "b": []string{"a","b","c"}},
-    JsonList{"string",1,true},
+    bqb.JsonMap{"a": 1, "b": []string{"a","b","c"}},
+    bqb.JsonList{"string",1,true,nil},
 ).ToRaw()
 ```
 
 Produces
 ```sql
 INSERT INTO my_table (json_map, json_list)
-VALUES ('{"a": 1, "b": ["a","b","c"]}', '["string",1,true]')
+VALUES ('{"a": 1, "b": ["a","b","c"]}', '["string",1,true,null]')
 ```
 
 ## Query Building
