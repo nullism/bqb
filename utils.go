@@ -6,11 +6,13 @@ import (
 	"strings"
 )
 
+type Dialect string
+
 const (
-	PGSQL = "postgres"
-	MYSQL = "mysql"
-	RAW   = "raw"
-	SQL   = "sql"
+	PGSQL Dialect = "postgres"
+	MYSQL Dialect = "mysql"
+	RAW   Dialect = "raw"
+	SQL   Dialect = "sql"
 
 	paramPh = "{{xX_PARAM_Xx}}"
 )
@@ -19,7 +21,7 @@ type JsonMap map[string]interface{}
 
 type JsonList []interface{}
 
-func dialectReplace(dialect string, sql string, params []interface{}) (string, error) {
+func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
 	for i, param := range params {
 		if dialect == RAW {
 			p, err := paramToRaw(param)
