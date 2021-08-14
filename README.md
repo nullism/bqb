@@ -250,7 +250,7 @@ if filterBobs {
 }
 
 if len(whereParts) > 0 {
-    q += strings.Join(whereParts, " AND ") + " "
+    q += "WHERE " + strings.Join(whereParts, " AND ") + " "
 }
 
 if limit != nil {
