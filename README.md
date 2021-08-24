@@ -299,7 +299,7 @@ Both methods will allow you to remain close to the SQL, however the `bqb` approa
 Take the following _typical_ query example:
 
 ```golang
-q := qb.Select("*").From("users").Where(qb.And{qb.Eq{"name": "Ed"}, qb.Gt{"age": 21})
+q := qb.Select("*").From("users").Where(qb.And{qb.Eq{"name": "Ed"}, qb.Gt{"age": 21}})
 ```
 
 Vs the bqb way:
