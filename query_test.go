@@ -7,7 +7,6 @@ import (
 )
 
 func TestA(t *testing.T) {
-	t.Error("testing test failure")
 }
 
 func TestArrays(t *testing.T) {

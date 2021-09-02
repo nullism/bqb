@@ -26,3 +26,6 @@ jobs:
 
     - name: Cover
       run: go tool cover -func=coverage
+
+    - name: Very Good Coverage
+      uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
