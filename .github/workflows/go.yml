@@ -27,13 +27,14 @@ jobs:
     - name: Cover
       run: go tool cover -func=coverage
 
-    - name: gcov2lcov-action
+    - name: Convert to LCOV
       uses: jandelgado/gcov2lcov-action@v1.0.8
       with:
         infile: coverage
         outfile: lcov.info
 
-    - name: Very Good Coverage
+    - name: Minimum coverage 100%
       uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
       with:
         path: lcov.info
+        min_coverage: 100
