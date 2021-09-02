@@ -35,3 +35,5 @@ jobs:
 
     - name: Very Good Coverage
       uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
+      with:
+        path: lcov.info
