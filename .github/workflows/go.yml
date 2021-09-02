@@ -27,5 +27,11 @@ jobs:
     - name: Cover
       run: go tool cover -func=coverage
 
+    - name: gcov2lcov-action
+      uses: jandelgado/gcov2lcov-action@v1.0.8
+      with:
+        infile: coverage
+        outfile: lcov.info
+
     - name: Very Good Coverage
       uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
