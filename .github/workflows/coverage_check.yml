@@ -46,13 +46,13 @@ jobs:
         echo "::set-output name=DROP::$cov_drop"
 
     - name: If coverage has dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == 'true' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == '1' }}
       run: |
         echo "Coverage has dropped from ${{ steps.last_coverage.outputs.COV }}% to ${{ steps.this_coverage.outputs.COV }}%"
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == 'false' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == '0' }}
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
