@@ -40,17 +40,19 @@ jobs:
     - id: coverage_dropped
       name: Check if coverage dropped
       run: |
-        cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.COV}}) > float(${{steps.this_coverage.outputs.COV}}))")
+        # cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.COV}}) > float(${{steps.this_coverage.outputs.COV}}))")
+        cov_drop=$(echo ${{steps.last_coverage.outputs.COV}}'>'${{steps.this_coverage.outputs.COV}} | bc -l)
+        echo "Has it dropped? $cov_drop"
         echo "::set-output name=DROP::$cov_drop"
 
     - name: If coverage has dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == 'True' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == 'true' }}
       run: |
         echo "Coverage has dropped from ${{ steps.last_coverage.outputs.COV }}% to ${{ steps.this_coverage.outputs.COV }}%"
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == 'False' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == 'false' }}
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
