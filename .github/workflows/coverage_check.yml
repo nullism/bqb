@@ -53,7 +53,7 @@ jobs:
     - name: Get coverage badge
       run: |
         total=${{ steps.this_coverage.outputs.COV }}
-        curl "https://img.shields.io/badge/coavrege-$total%25-green" > coverage.svg
+        curl "https://img.shields.io/badge/coverage-$total%25-green" > coverage.svg
 
     - name: Add coverage info
       uses: EndBug/add-and-commit@v7
