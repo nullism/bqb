@@ -18,25 +18,33 @@ jobs:
       with:
         go-version: 1.17
 
+    - name: Utils
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
     - id: last_coverage
       run: |
-        last_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
-        echo "::set-output name=LAST_COV::${last_cov}"
+        echo "::set-output name=LAST_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
 
     - id: this_coverage
       run: |
         go test -coverprofile=coverage.out
-        this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
         echo "::set-output name=THIS_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
 
+    - id: coverage_dropped
+      run: |
+        cov_drop=$(python -c "print(float(steps.last_coverage.outputs.LAST_COV) > float(steps.last_coverage.outputs.LAST_COV))")
+        echo "::set-output name=DROP::${{ ${cov_drop} == 'True' }}"
+
     - name: If coverage has dropped
-      if: ${{ steps.last_coverage.outputs.LAST_COV > steps.this_coverage.outputs.THIS_COV }}
+      if: ${{ steps.coverage_dropped.outputs.DROP }}
       run: |
         echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }} to ${{ steps.this_coverage.outputs.THIS_COV }}"
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ steps.last_coverage.outputs.LAST_COV <= steps.this_coverage.outputs.THIS_COV }}
+      if: ${{ !steps.coverage_dropped.outputs.DROP }}
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.LAST_COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.THIS_COV }}"
 
