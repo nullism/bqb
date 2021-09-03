@@ -50,7 +50,7 @@ jobs:
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ !steps.coverage_dropped.outputs.DROP == 'False' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == 'False' }}
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
