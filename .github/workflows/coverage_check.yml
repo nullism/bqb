@@ -40,7 +40,6 @@ jobs:
     - id: coverage_dropped
       name: Check if coverage dropped
       run: |
-        # cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.COV}}) > float(${{steps.this_coverage.outputs.COV}}))")
         cov_drop=$(echo ${{steps.last_coverage.outputs.COV}}'>'${{steps.this_coverage.outputs.COV}} | bc -l)
         echo "Has it dropped? $cov_drop"
         echo "::set-output name=DROP::$cov_drop"
