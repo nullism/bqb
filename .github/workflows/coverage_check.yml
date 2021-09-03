@@ -24,29 +24,35 @@ jobs:
         python-version: '3.x'
 
     - id: last_coverage
+      name: Get last coverage
       run: |
-        echo "::set-output name=LAST_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
+        echo "::set-output name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
 
     - id: this_coverage
+      name: Get current coverage
       run: |
         go test -coverprofile=coverage.out
-        echo "::set-output name=THIS_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
+        echo "::set-output name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
+
+    - name: Function Coverage
+      run: go tool cover -func=coverage.out
 
     - id: coverage_dropped
+      name: Check if coverage dropped
       run: |
-        cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.LAST_COV}}) > float(${{steps.last_coverage.outputs.LAST_COV}}))")
-        echo "::set-output name=OKAY::$cov_drop"
+        cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.COV}}) > float(${{steps.this_coverage.outputs.COV}}))")
+        echo "::set-output name=DROP::$cov_drop"
 
     - name: If coverage has dropped
-      if: ${{ steps.coverage_dropped.outputs.OKAY == 'False' }}
+      if: ${{ steps.coverage_dropped.outputs.DROP == 'True' }}
       run: |
-        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }}% to ${{ steps.this_coverage.outputs.THIS_COV }}%"
+        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.COV }}% to ${{ steps.this_coverage.outputs.COV }}%"
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ !steps.coverage_dropped.outputs.OKAY == 'True' }}
+      if: ${{ !steps.coverage_dropped.outputs.DROP == 'False' }}
       run: |
-        echo -e "Previous coverage: ${{ steps.last_coverage.outputs.LAST_COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.THIS_COV }}"
+        echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
     - name: Add coverage report if okay
       uses: EndBug/add-and-commit@v7
