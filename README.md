@@ -1,5 +1,7 @@
 # Basic Query Builder
 
+![cod cov](coverage.svg)
+
 # Why
 
 1. Simple, lightweight, and fast
