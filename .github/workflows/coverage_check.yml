@@ -30,6 +30,7 @@ jobs:
         go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > last_cov
 
     - id: this_coverage
+      run: |
         go test -coverprofile=coverage.out
         go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > this_cov
 
