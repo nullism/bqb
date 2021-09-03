@@ -1,9 +1,5 @@
 name: Coverage Check
 
-branding:
-  icon: file
-  color: red
-
 on:
   push:
     branches: [ main ]
@@ -12,7 +8,7 @@ on:
 
 jobs:
 
-  build:
+  coverage:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -22,17 +18,22 @@ jobs:
       with:
         go-version: 1.17
 
-    - name: Build
-      run: go build -v ./...
-
     - id: last_coverage
       run: |
-        go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > last_cov
+        last_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
+        echo '::set-output name=LAST_COV::${last_cov}'
 
     - id: this_coverage
       run: |
         go test -coverprofile=coverage.out
-        go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > this_cov
+        this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
+        echo '::set-output name=THIS_COV::${this_cov}'
+
+    - name: Coverage comparison
+      if: ${{ steps.last_coverage.outputs.LAST_COV > steps.this_coverage.outputs.THIS_COV }}
+      run: |
+        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }} to ${{ steps.this_coverage.outputs.THIS_COV }}"
+        exit 1
 
     - name: Add coverage report
       uses: EndBug/add-and-commit@v7
