@@ -35,25 +35,24 @@ jobs:
     - id: coverage_dropped
       run: |
         cov_drop=$(python -c "print(float(${{steps.last_coverage.outputs.LAST_COV}}) > float(${{steps.last_coverage.outputs.LAST_COV}}))")
-        echo "::set-output name=DROP::$cov_drop"
+        echo "::set-output name=OKAY::$cov_drop"
 
     - name: If coverage has dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == 'False' }}
+      if: ${{ steps.coverage_dropped.outputs.OKAY == 'False' }}
       run: |
-        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }} to ${{ steps.this_coverage.outputs.THIS_COV }}"
+        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }}% to ${{ steps.this_coverage.outputs.THIS_COV }}%"
         exit 1
 
     - name: If coverage has not dropped
-      if: ${{ !steps.coverage_dropped.outputs.DROP == 'True' }}
+      if: ${{ !steps.coverage_dropped.outputs.OKAY == 'True' }}
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.LAST_COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.THIS_COV }}"
 
-    # - name: Add coverage report if okay
-    #   if: ${{ steps.last_coverage.outputs.LAST_COV <= steps.this_coverage.outputs.THIS_COV }}
-    #   uses: EndBug/add-and-commit@v7
-    #   with:
-    #     add: coverage.out
-    #     message: "Update test coverage"
+    - name: Add coverage report if okay
+      uses: EndBug/add-and-commit@v7
+      with:
+        add: coverage.out
+        message: "Update test coverage"
 
     - name: Convert to LCOV
       uses: jandelgado/gcov2lcov-action@v1.0.8
