@@ -21,16 +21,21 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Test
-      run: go test -coverprofile=coverage ./...
+    - name: Coverage compare
+      run: |
+        last_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
+        go test -coverprofile=coverage.out
+        this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
 
-    - name: Cover
-      run: go tool cover -html=coverage -o coverage.html
+        if [ "${last_cov}" -gt "${this_cov}" ]; then
+            echo "Coverage has dropped from ${last_cov} to ${this_cov}"
+            exit 1
+        fi
 
     - name: Add coverage report
       uses: EndBug/add-and-commit@v7
       with:
-        add: coverage.html
+        add: coverage.out
         message: "Update test coverage"
 
     - name: Convert to LCOV
