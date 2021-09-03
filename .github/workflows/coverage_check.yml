@@ -1,5 +1,9 @@
 name: Coverage Check
 
+branding:
+  icon: file
+  color: red
+
 on:
   push:
     branches: [ main ]
@@ -21,16 +25,13 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Coverage compare
+    - id: last_coverage
       run: |
-        last_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
-        go test -coverprofile=coverage.out
-        this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
+        go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > last_cov
 
-        if [ "${last_cov}" -gt "${this_cov}" ]; then
-            echo "Coverage has dropped from ${last_cov} to ${this_cov}"
-            exit 1
-        fi
+    - id: this_coverage
+        go test -coverprofile=coverage.out
+        go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g > this_cov
 
     - name: Add coverage report
       uses: EndBug/add-and-commit@v7
@@ -41,7 +42,7 @@ jobs:
     - name: Convert to LCOV
       uses: jandelgado/gcov2lcov-action@v1.0.8
       with:
-        infile: coverage
+        infile: coverage.out
         outfile: lcov.info
 
     - name: Minimum coverage 100%
