@@ -40,12 +40,12 @@ jobs:
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.LAST_COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.THIS_COV }}"
 
-    - name: Add coverage report if okay
-      if: ${{ steps.last_coverage.outputs.LAST_COV <= steps.this_coverage.outputs.THIS_COV }}
-      uses: EndBug/add-and-commit@v7
-      with:
-        add: coverage.out
-        message: "Update test coverage"
+    # - name: Add coverage report if okay
+    #   if: ${{ steps.last_coverage.outputs.LAST_COV <= steps.this_coverage.outputs.THIS_COV }}
+    #   uses: EndBug/add-and-commit@v7
+    #   with:
+    #     add: coverage.out
+    #     message: "Update test coverage"
 
     - name: Convert to LCOV
       uses: jandelgado/gcov2lcov-action@v1.0.8
