@@ -21,13 +21,13 @@ jobs:
     - id: last_coverage
       run: |
         last_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
-        echo '::set-output name=LAST_COV::${last_cov}'
+        echo "::set-output name=LAST_COV::${last_cov}"
 
     - id: this_coverage
       run: |
         go test -coverprofile=coverage.out
         this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
-        echo '::set-output name=THIS_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)'
+        echo "::set-output name=THIS_COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
 
     - name: If coverage has dropped
       if: ${{ steps.last_coverage.outputs.LAST_COV > steps.this_coverage.outputs.THIS_COV }}
