@@ -36,12 +36,6 @@ func Optional(prefix string) *Query {
 	}
 }
 
-func junk() {
-	if 1 == 2 {
-		return
-	}
-}
-
 // And joins the current QueryPart to the previous QueryPart with ' AND '
 func (q *Query) And(text string, args ...interface{}) *Query {
 	if q == nil {
