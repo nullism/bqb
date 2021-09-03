@@ -1,6 +1,6 @@
 # Basic Query Builder
 
-![code cov](coverage.svg)
+![code coverage](coverage.svg)
 
 # Why
 
