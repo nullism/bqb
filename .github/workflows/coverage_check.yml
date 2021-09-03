@@ -29,11 +29,16 @@ jobs:
         this_cov=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)
         echo '::set-output name=THIS_COV::${this_cov}'
 
-    - name: Coverage comparison
+    - name: If coverage has dropped
       if: ${{ steps.last_coverage.outputs.LAST_COV > steps.this_coverage.outputs.THIS_COV }}
       run: |
         echo "Coverage has dropped from ${{ steps.last_coverage.outputs.LAST_COV }} to ${{ steps.this_coverage.outputs.THIS_COV }}"
         exit 1
+
+    - name: If coverage has not dropped
+      if: ${{ steps.last_coverage.outputs.LAST_COV <= steps.this_coverage.outputs.THIS_COV }}
+      run: |
+        echo "Coverage has changed from ${{ steps.last_coverage.outputs.LAST_COV }} to ${{ steps.this_coverage.outputs.THIS_COV }}"
 
     - name: Add coverage report
       uses: EndBug/add-and-commit@v7
