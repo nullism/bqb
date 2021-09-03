@@ -50,11 +50,22 @@ jobs:
       run: |
         echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
-    - name: Add coverage report if okay
+    - name: Get coverage badge
+      run: |
+        total=${{ steps.this_coverage.outputs.COV }}
+        curl "https://img.shields.io/badge/coavrege-$total%25-green" > coverage.svg
+
+    - name: Add coverage badge
+      uses: EndBug/add-and-commit@v7
+      with:
+        add: coverage.svg
+        message: "Update coverage.svg"
+
+    - name: Add coverage report
       uses: EndBug/add-and-commit@v7
       with:
         add: coverage.out
-        message: "Update test coverage"
+        message: "Update coverage.out"
 
     - name: Convert to LCOV
       uses: jandelgado/gcov2lcov-action@v1.0.8
