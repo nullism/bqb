@@ -1,0 +1,449 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>bqb: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/nullism/bqb/query.go (100.0%)</option>
+				
+				<option value="file1">github.com/nullism/bqb/utils.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package bqb
+
+import (
+        "errors"
+        "fmt"
+        "strings"
+)
+
+type QueryPart struct {
+        Text   string
+        Params []interface{}
+}
+
+type Query struct {
+        Parts          []QueryPart
+        OptionalPrefix string
+}
+
+// New returns an instance of Query with a single QueryPart
+func New(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        q := Q()
+        q.Parts = append(q.Parts, makePart(text, args...))
+        return q
+}</span>
+
+// Q returns a new empty Query
+func Q() *Query <span class="cov8" title="1">{
+        return &amp;Query{}
+}</span>
+
+// Optional returns a query object that has a conditional prefix which only
+// resolves when at least one QueryPart has been added.
+func Optional(prefix string) *Query <span class="cov8" title="1">{
+        return &amp;Query{
+                OptionalPrefix: prefix,
+        }
+}</span>
+
+// And joins the current QueryPart to the previous QueryPart with ' AND '
+func (q *Query) And(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">return q.Join(" AND ", text, args...)</span>
+}
+
+// Comma joins the current QueryPart to the previous QueryPart with a comma
+func (q *Query) Comma(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">return q.Join(",", text, args...)</span>
+}
+
+// Concat concatenates the current QueryPart to the previous QueryPart with a
+// zero space string
+func (q *Query) Concat(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">return q.Join("", text, args...)</span>
+}
+
+// Join joins the current QueryPart to the previous QueryPart with `sep`
+func (q *Query) Join(sep, text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">if len(q.Parts) &gt; 0 </span><span class="cov8" title="1">{
+                q.Parts = append(q.Parts, makePart(sep+text, args...))
+        }</span> else<span class="cov8" title="1"> {
+                q.Parts = append(q.Parts, makePart(text, args...))
+        }</span>
+
+        <span class="cov8" title="1">return q</span>
+}
+
+// Len returns the length of Query.Parts
+func (q *Query) Len() int <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">return len(q.Parts)</span>
+}
+
+// Or joins the current QueryPart to the previous QueryPart with ' OR '
+func (q *Query) Or(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">return q.Join(" OR ", text, args...)</span>
+}
+
+// Print outputs the sql, parameters, and errors of a Query
+func (q *Query) Print() <span class="cov8" title="1">{
+        sql, params, err := q.ToSql()
+        fmt.Printf("SQL: %v\n", sql)
+        fmt.Printf("PARAMS: %v\n", params)
+        fmt.Printf("ERROR: %v\n", err)
+}</span>
+
+// Space joins the current QueryPart to the previous QueryPart with a space
+func (q *Query) Space(text string, args ...interface{}) *Query <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return New(text, args...)
+        }</span>
+        <span class="cov8" title="1">return q.Join(" ", text, args...)</span>
+}
+
+func (q *Query) ToMysql() (string, []interface{}, error) <span class="cov8" title="1">{
+        sql, params, err := q.toSql()
+        if err != nil </span><span class="cov8" title="1">{
+                return "", nil, err
+        }</span>
+        <span class="cov8" title="1">sql, err = dialectReplace(MYSQL, sql, params)
+        return sql, params, err</span>
+}
+
+// ToPgsql returns the sql placeholders with dollarsign format used by postgres
+func (q *Query) ToPgsql() (string, []interface{}, error) <span class="cov8" title="1">{
+        sql, params, err := q.toSql()
+        if err != nil </span><span class="cov8" title="1">{
+                return "", nil, err
+        }</span>
+        <span class="cov8" title="1">sql, err = dialectReplace(PGSQL, sql, params)
+        return sql, params, err</span>
+}
+
+// ToRaw returns a string which the parameters have been resolved added
+// as correctly as possible.
+func (q *Query) ToRaw() (string, error) <span class="cov8" title="1">{
+        sql, params, err := q.toSql()
+        if err != nil </span><span class="cov8" title="1">{
+                return "", err
+        }</span>
+
+        <span class="cov8" title="1">sql, err = dialectReplace(RAW, sql, params)
+        return sql, err</span>
+}
+
+func (q *Query) ToSql() (string, []interface{}, error) <span class="cov8" title="1">{
+        sql, params, err := q.toSql()
+        if err != nil </span><span class="cov8" title="1">{
+                return "", nil, err
+        }</span>
+        <span class="cov8" title="1">sql, err = dialectReplace(SQL, sql, params)
+        return sql, params, err</span>
+}
+
+func (q *Query) toSql() (string, []interface{}, error) <span class="cov8" title="1">{
+        if q == nil </span><span class="cov8" title="1">{
+                return "", nil, errors.New("cannot get sql on nil Query")
+        }</span>
+        <span class="cov8" title="1">var sql string
+        var params []interface{}
+
+        if q.OptionalPrefix != "" &amp;&amp; len(q.Parts) &gt; 0 </span><span class="cov8" title="1">{
+                sql = q.OptionalPrefix + " "
+        }</span>
+
+        <span class="cov8" title="1">for _, p := range q.Parts </span><span class="cov8" title="1">{
+                sql += p.Text
+                params = append(params, p.Params...)
+        }</span>
+
+        <span class="cov8" title="1">return strings.TrimSpace(sql), params, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package bqb
+
+import (
+        "encoding/json"
+        "fmt"
+        "strings"
+)
+
+type Dialect string
+
+const (
+        PGSQL Dialect = "postgres"
+        MYSQL Dialect = "mysql"
+        RAW   Dialect = "raw"
+        SQL   Dialect = "sql"
+
+        paramPh = "{{xX_PARAM_Xx}}"
+)
+
+type JsonMap map[string]interface{}
+
+type JsonList []interface{}
+
+func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) <span class="cov8" title="1">{
+        for i, param := range params </span><span class="cov8" title="1">{
+                if dialect == RAW </span><span class="cov8" title="1">{
+                        p, err := paramToRaw(param)
+                        if err != nil </span><span class="cov8" title="1">{
+                                return "", err
+                        }</span>
+                        <span class="cov8" title="1">sql = strings.Replace(sql, paramPh, p, 1)</span>
+                } else<span class="cov8" title="1"> if dialect == MYSQL || dialect == SQL </span><span class="cov8" title="1">{
+                        sql = strings.Replace(sql, paramPh, "?", 1)
+                }</span> else<span class="cov8" title="1"> if dialect == PGSQL </span><span class="cov8" title="1">{
+                        sql = strings.ReplaceAll(sql, "??", "?")
+                        sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+                }</span>
+        }
+        <span class="cov8" title="1">return sql, nil</span>
+}
+
+func makePart(text string, args ...interface{}) QueryPart <span class="cov8" title="1">{
+        tempPh := "XXX___XXX"
+        originalText := text
+        text = strings.ReplaceAll(text, "??", tempPh)
+
+        var newArgs []interface{}
+
+        for _, arg := range args </span><span class="cov8" title="1">{
+                switch v := arg.(type) </span>{
+
+                case []int:<span class="cov8" title="1">
+                        newPh := []string{}
+                        for _, i := range v </span><span class="cov8" title="1">{
+                                newPh = append(newPh, paramPh)
+                                newArgs = append(newArgs, i)
+                        }</span>
+                        <span class="cov8" title="1">text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)</span>
+
+                case []*int:<span class="cov8" title="1">
+                        newPh := []string{}
+                        for _, i := range v </span><span class="cov8" title="1">{
+                                newPh = append(newPh, paramPh)
+                                newArgs = append(newArgs, i)
+                        }</span>
+                        <span class="cov8" title="1">if len(newPh) &gt; 0 </span><span class="cov8" title="1">{
+                                text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+                        }</span> else<span class="cov8" title="1"> {
+                                text = strings.Replace(text, "?", paramPh, 1)
+                                newArgs = append(newArgs, nil)
+                        }</span>
+
+                case []string:<span class="cov8" title="1">
+                        newPh := []string{}
+                        for _, s := range v </span><span class="cov8" title="1">{
+                                newPh = append(newPh, paramPh)
+                                newArgs = append(newArgs, s)
+                        }</span>
+                        <span class="cov8" title="1">text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)</span>
+
+                case []*string:<span class="cov8" title="1">
+                        newPh := []string{}
+                        for _, s := range v </span><span class="cov8" title="1">{
+                                newPh = append(newPh, paramPh)
+                                newArgs = append(newArgs, s)
+                        }</span>
+                        <span class="cov8" title="1">if len(newPh) &gt; 0 </span><span class="cov8" title="1">{
+                                text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+                        }</span> else<span class="cov8" title="1"> {
+                                text = strings.Replace(text, "?", paramPh, 1)
+                                newArgs = append(newArgs, nil)
+                        }</span>
+
+                case []interface{}:<span class="cov8" title="1">
+                        newPh := []string{}
+                        for _, s := range v </span><span class="cov8" title="1">{
+                                newPh = append(newPh, paramPh)
+                                newArgs = append(newArgs, s)
+                        }</span>
+                        <span class="cov8" title="1">text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)</span>
+
+                case *Query:<span class="cov8" title="1">
+                        if v == nil </span><span class="cov8" title="1">{
+                                text = strings.Replace(text, "?", paramPh, 1)
+                                newArgs = append(newArgs, nil)
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">sql, params, _ := v.toSql()
+                        text = strings.Replace(text, "?", sql, 1)
+                        newArgs = append(newArgs, params...)</span>
+
+                case JsonMap, JsonList:<span class="cov8" title="1">
+                        bytes, err := json.Marshal(v)
+                        if err != nil </span><span class="cov8" title="1">{
+                                panic(fmt.Sprintf("cann jsonify struct: %v", err))</span>
+                        }
+                        <span class="cov8" title="1">text = strings.Replace(text, "?", paramPh, 1)
+                        newArgs = append(newArgs, string(bytes))</span>
+
+                case *JsonMap, *JsonList:<span class="cov8" title="1">
+                        bytes, err := json.Marshal(v)
+                        if err != nil </span><span class="cov8" title="1">{
+                                panic(fmt.Sprintf("cann jsonify struct: %v", err))</span>
+                        }
+                        <span class="cov8" title="1">text = strings.Replace(text, "?", paramPh, 1)
+                        newArgs = append(newArgs, string(bytes))</span>
+
+                default:<span class="cov8" title="1">
+                        text = strings.Replace(text, "?", paramPh, 1)
+                        newArgs = append(newArgs, v)</span>
+                }
+        }
+        <span class="cov8" title="1">extraCount := strings.Count(text, "?")
+        if extraCount &gt; 0 </span><span class="cov8" title="1">{
+                panic(fmt.Sprintf("extra ? in text: %v (%d args)", originalText, len(newArgs)))</span>
+        }
+
+        <span class="cov8" title="1">paramCount := strings.Count(text, paramPh)
+        if paramCount &lt; len(newArgs) </span><span class="cov8" title="1">{
+                panic(fmt.Sprintf("missing ? in text: %v (%d args)", originalText, len(newArgs)))</span>
+        }
+
+        <span class="cov8" title="1">text = strings.ReplaceAll(text, tempPh, "??")
+
+        return QueryPart{
+                Text:   text,
+                Params: newArgs,
+        }</span>
+}
+
+func paramToRaw(param interface{}) (string, error) <span class="cov8" title="1">{
+        switch p := param.(type) </span>{
+        case bool:<span class="cov8" title="1">
+                return fmt.Sprintf("%v", p), nil</span>
+        case float32, float64, int, int8, int16, int32, int64,
+                uint8, uint16, uint32, uint64:<span class="cov8" title="1">
+                return fmt.Sprintf("%v", p), nil</span>
+        case *int:<span class="cov8" title="1">
+                if p == nil </span><span class="cov8" title="1">{
+                        return "NULL", nil
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("%v", *p), nil</span>
+        case string:<span class="cov8" title="1">
+                return fmt.Sprintf("'%v'", p), nil</span>
+        case *string:<span class="cov8" title="1">
+                if p == nil </span><span class="cov8" title="1">{
+                        return "NULL", nil
+                }</span>
+                <span class="cov8" title="1">return fmt.Sprintf("'%v'", *p), nil</span>
+        case nil:<span class="cov8" title="1">
+                return "NULL", nil</span>
+        default:<span class="cov8" title="1">
+                return "", fmt.Errorf("unsupported type for Raw query: %T", p)</span>
+        }
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

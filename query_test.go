@@ -7,7 +7,6 @@ import (
 )
 
 func TestA(t *testing.T) {
-
 }
 
 func TestArrays(t *testing.T) {

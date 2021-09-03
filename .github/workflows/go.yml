@@ -22,4 +22,25 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -coverprofile=coverage ./...
+
+    - name: Cover
+      run: go tool cover -html=coverage -o coverage.html
+
+    - name: Add coverage report
+      uses: EndBug/add-and-commit@v7
+      with:
+        add: coverage.html
+        message: "Update test coverage"
+
+    - name: Convert to LCOV
+      uses: jandelgado/gcov2lcov-action@v1.0.8
+      with:
+        infile: coverage
+        outfile: lcov.info
+
+    - name: Minimum coverage 100%
+      uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
+      with:
+        path: lcov.info
+        min_coverage: 100
