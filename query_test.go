@@ -508,35 +508,35 @@ func TestQuerySubquery(t *testing.T) {
 
 func TestQueryTypes(t *testing.T) {
 
-	bool_ := true
+	boolX := true
 
-	int_ := 1
-	ints_ := []int{2, 2}
+	intX := 1
+	intsX := []int{2, 2}
 
-	string_ := "s"
-	strings_ := []string{"s1", "s2"}
+	stringX := "s"
+	stringsX := []string{"s1", "s2"}
 
-	intp := &int_
+	intp := &intX
 	var intpn *int
-	intsp := []*int{&int_, &int_}
+	intsp := []*int{&intX, &intX}
 	var intspn []*int
 
-	stringp := &string_
+	stringp := &stringX
 	var stringpn *string
-	stringsp := []*string{&string_, &string_}
+	stringsp := []*string{&stringX, &stringX}
 	var stringspn []*string
 
-	json_ := JsonMap{"a": 1}
+	jsonX := JsonMap{"a": 1}
 	var jsonp *JsonMap
 
 	text := "b:? - i:? ? - s:? ? - ip:? ? ? ? - sp:? ? ? ? - j:? ?"
 	q := New(text,
-		bool_,
-		int_, ints_,
-		string_, strings_,
+		boolX,
+		intX, intsX,
+		stringX, stringsX,
 		intp, intpn, intsp, intspn,
 		stringp, stringpn, stringsp, stringspn,
-		json_, jsonp)
+		jsonX, jsonp)
 	sql, _ := q.ToRaw()
 	want := `b:true - i:1 2,2 - s:'s' 's1','s2' - ip:1 NULL 1,1 NULL - sp:'s' NULL 's','s' NULL - j:'{"a":1}' 'null'`
 	if want != sql {

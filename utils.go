@@ -6,19 +6,28 @@ import (
 	"strings"
 )
 
+// Dialect holds the Query dialect
 type Dialect string
 
 const (
+	// PostGres dialect
 	PGSQL Dialect = "postgres"
+	// MySQL dialect
 	MYSQL Dialect = "mysql"
-	RAW   Dialect = "raw"
-	SQL   Dialect = "sql"
+	// Raw dialect uses no parameter conversion
+	RAW Dialect = "raw"
+	// Generic SQL dialect
+	SQL Dialect = "sql"
 
 	paramPh = "{{xX_PARAM_Xx}}"
 )
 
+// JsonMap is a custom type which tells bqb to convert the parameter to
+// a JSON object without requiring reflection.
 type JsonMap map[string]interface{}
 
+// JsonList is a type that tells bqb to convert the parameter to a JSON
+// list without requiring reflection.
 type JsonList []interface{}
 
 func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
