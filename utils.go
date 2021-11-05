@@ -10,13 +10,13 @@ import (
 type Dialect string
 
 const (
-	// PostGres dialect
+	// PGSQL postgres dialect
 	PGSQL Dialect = "postgres"
-	// MySQL dialect
+	// MYSQL MySQL dialect
 	MYSQL Dialect = "mysql"
-	// Raw dialect uses no parameter conversion
+	// RAW dialect uses no parameter conversion
 	RAW Dialect = "raw"
-	// Generic SQL dialect
+	// SQL generic dialect
 	SQL Dialect = "sql"
 
 	paramPh = "{{xX_PARAM_Xx}}"
