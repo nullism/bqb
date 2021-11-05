@@ -1,8 +1,6 @@
 # Basic Query Builder
 
-![code coverage](coverage.svg)
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/nullism/bqb)](https://goreportcard.com/report/github.com/nullism/bqb)
+![code coverage](coverage.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/nullism/bqb)](https://goreportcard.com/report/github.com/nullism/bqb)
 
 # Why
 
