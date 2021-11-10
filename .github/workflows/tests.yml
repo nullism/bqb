@@ -1,4 +1,4 @@
-name: Coverage Check
+name: Tests
 
 on:
   push:

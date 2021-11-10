@@ -1,6 +1,7 @@
 # Basic Query Builder
 
-[![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) ![code coverage](coverage.svg) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb)
+[![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) ![code coverage](coverage.svg) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb)
+
 
 # Why
 
