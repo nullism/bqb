@@ -307,6 +307,16 @@ func TestQuery_Concat(t *testing.T) {
 	}
 }
 
+func TestQuery_Empty(t *testing.T) {
+	child := Optional("EMPTY")
+	parent := New("?", child)
+	sql, _, _ := parent.ToSql()
+
+	if sql != "" {
+		t.Errorf("expected empty string in empty query: %q", sql)
+	}
+}
+
 func TestQuery_Len(t *testing.T) {
 	q := Optional("a")
 	if q.Len() != 0 {
