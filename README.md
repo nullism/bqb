@@ -2,6 +2,10 @@
 
 [![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) [![code coverage](coverage.svg)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb)
 
+# Compatibility
+
+This has been tested with sqlite, PostGres, and MySQL, using `database/sql`, `pq`, `pgx`, and `sqlx`.
+By the nature of how it works it should be fully compatible with any DB interface and database that uses `?` or `$` parameter syntax.
 
 # Why
 
