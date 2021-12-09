@@ -1,6 +1,7 @@
 # Basic Query Builder
 
-[![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) [![code coverage](coverage.svg)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb)
+[![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) [![code coverage](coverage.svg)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
+
 
 # Compatibility
 
