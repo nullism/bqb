@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestA(t *testing.T) {
@@ -370,6 +371,28 @@ func TestQuery_ToMysql(t *testing.T) {
 	want := "SELECT * FROM table WHERE a = ? AND b = ?"
 	if sql != want {
 		t.Errorf("got: %q, want: %q", sql, want)
+	}
+}
+
+func TestQuery_ToMysqlTime(t *testing.T) {
+	var names []string
+	for i := 0; i < 10000; i++ {
+		names = append(names, fmt.Sprintf("n%d", i))
+	}
+
+	q := New("TEST IN (?)", names)
+	q2 := New("Secondary ?", q)
+	q3 := New("Ternary ?", q2)
+
+	start := time.Now()
+	_, _, err := q3.ToMysql()
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
+
+	delta := time.Since(start)
+	if delta.Seconds() > 5 {
+		t.Errorf("ToMysql took too long to return: %v", delta.Seconds())
 	}
 }
 
