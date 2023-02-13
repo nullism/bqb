@@ -31,6 +31,9 @@ type JsonMap map[string]interface{}
 type JsonList []interface{}
 
 func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
+	if dialect == MYSQL || dialect == SQL {
+		sql = strings.ReplaceAll(sql, paramPh, "?")
+	}
 	for i, param := range params {
 		if dialect == RAW {
 			p, err := paramToRaw(param)
@@ -38,8 +41,6 @@ func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, 
 				return "", err
 			}
 			sql = strings.Replace(sql, paramPh, p, 1)
-		} else if dialect == MYSQL || dialect == SQL {
-			sql = strings.Replace(sql, paramPh, "?", 1)
 		} else if dialect == PGSQL {
 			sql = strings.ReplaceAll(sql, "??", "?")
 			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
