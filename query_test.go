@@ -385,15 +385,22 @@ func TestQuery_ToMysqlTime(t *testing.T) {
 	q3 := New("Ternary ?", q2)
 
 	start := time.Now()
-	_, _, err := q3.ToMysql()
+	_, params, err := q3.ToMysql()
 	if err != nil {
 		t.Errorf("got error: %v", err)
 	}
 
 	delta := time.Since(start)
-	if delta.Seconds() > 5 {
+	if delta.Seconds() > 1 {
 		t.Errorf("ToMysql took too long to return: %v", delta.Seconds())
 	}
+
+	for i := 0; i < len(names); i++ {
+		if params[i] != names[i] {
+			t.Errorf("got: %v, want: %v", params[i], names[i])
+		}
+	}
+
 }
 
 func TestQuery_ToPgsql(t *testing.T) {
