@@ -1,7 +1,6 @@
 # Basic Query Builder
 
-[![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) [![code coverage](coverage.svg)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
-
+[![Tests Status](https://github.com/nullism/bqb/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![GoDoc](https://godoc.org/github.com/nullism/bqb?status.svg)](https://godoc.org/github.com/nullism/bqb) [![code coverage](coverage.svg)](https://github.com/nullism/bqb/actions/workflows/tests.yml) [![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/nullism/bqb) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 # Compatibility
 
@@ -25,9 +24,11 @@ sql, params, err := q.ToSql()
 ```
 
 Produces
+
 ```sql
 SELECT * FROM places WHERE id = ?
 ```
+
 ```
 PARAMS: [1234]
 ```
@@ -44,16 +45,18 @@ sql, params, err := q.ToPgsql()
 ```
 
 Produces
+
 ```sql
 DELETE FROM users WHERE id = $1 OR name IN ($2, $3) LIMIT $4
 ```
+
 ```
 PARAMS: [7, "delete", "remove", 5]
 ```
 
 ## Raw - ToRaw()
 
-*Obvious warning: You should not use this for user input*
+_Obvious warning: You should not use this for user input_
 
 The `ToRaw()` call returns a string with the values filled in rather than parameterized
 
@@ -63,6 +66,7 @@ sql, err := q.ToRaw()
 ```
 
 Produces
+
 ```
 a = 'my a', b = 1234, c = NULL
 ```
@@ -76,15 +80,17 @@ q := bqb.New(
 )
 sql, _ := q.ToRaw()
 ```
+
 Produces
+
 ```
 int:1 string:'2' []int:3,3 []string:'4','4' Query:5 JsonMap:'{"6":6}' nil:NULL []intf:'a',1,true
 ```
 
-## driver.Valuer
+### driver.Valuer
 
 The [driver.Valuer](https://pkg.go.dev/database/sql/driver#Valuer) interface is supported for types that are able to convert
-themselves to a sql driver value.
+themselves to a sql driver value. See [examples/main.go:valuer](./examples/main.go#L102).
 
 ```
 q := bqb.New("?", valuer)
@@ -103,6 +109,7 @@ Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, or `[]interface{}` a
 ```
 
 Produces
+
 ```
 SQL: strs:(?,?) *strs:(?) ints:(?,?) *ints:(?) intfs:(?,?)
 PARAMS: [a b <nil> 1 2 <nil> 3 true]
@@ -122,6 +129,7 @@ sql, err := bqb.New(
 ```
 
 Produces
+
 ```sql
 INSERT INTO my_table (json_map, json_list)
 VALUES ('{"a": 1, "b": ["a","b","c"]}', '["string",1,true,null]')
@@ -149,6 +157,7 @@ sel.Comma("age").Comma("email")
 ```
 
 Produces
+
 ```sql
 SELECT id,age,email
 ```
@@ -196,21 +205,25 @@ q := bqb.New("? ? ?", sel, from, where).Space("LIMIT ?", 10)
 ```
 
 Assuming all values are true, the query would look like:
+
 ```sql
 SELECT name,id FROM my_table WHERE (name = 'adult' AND age > 20) OR (name = 'youth' AND age < 21) LIMIT 10
 ```
 
 If `getName` and `getId` are false, the query would be
+
 ```sql
 SELECT * FROM my_table WHERE (name = 'adult' AND age > 20) OR (name = 'youth' AND age < 21) LIMIT 10
 ```
 
 If `filterAdult` is `false`, the query would be:
+
 ```sql
 SELECT name,id FROM my_table WHERE (name = 'youth' AND age < 21) LIMIT 10
 ```
 
 If all values are `false`, the query would be:
+
 ```sql
 SELECT * FROM my_table LIMIT 10
 ```
@@ -279,6 +292,7 @@ if limit != nil {
 ```
 
 Some problems with that approach
+
 1. You must perform a string join for the various parts of the where clause
 2. You must remember to include a trailing or leading space for each clause
 3. You have to keep track of parameter count (for Postgres anyway)
@@ -307,9 +321,9 @@ if limit != nil {
 ```
 
 Both methods will allow you to remain close to the SQL, however the `bqb` approach will
+
 1. Easily adapt to MySQL or Postgres without changing parameters
 2. Hide the "WHERE" clause if both `filterBobs` and `filterAge` are false
-
 
 ## Why not use a full query builder?
 
@@ -326,7 +340,6 @@ q := bqb.New("SELECT * FROM users WHERE name = ? AND age > ?", "ed", 21)
 ```
 
 ## Okay, so a simple query it might make sense to use something like `bqb`, but what about grouped queries?
-
 
 A query builder can handle this in multiple ways, a fairly common pattern might be:
 
@@ -378,7 +391,3 @@ q.Space("?", where)
 ```
 
 It seems to be a matter of taste as to which method appears cleaner.
-
-
-
-

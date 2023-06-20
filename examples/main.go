@@ -1,6 +1,11 @@
 package main
 
-import "github.com/nullism/bqb"
+import (
+	"database/sql/driver"
+	"fmt"
+
+	"github.com/nullism/bqb"
+)
 
 func basic() {
 	println("===[ Example: Basic ]===")
@@ -85,10 +90,28 @@ func nilQuery() {
 	q.Print()
 }
 
+type valuerExample struct {
+	Name string
+	Age  int
+}
+
+func (v valuerExample) Value() (driver.Value, error) {
+	return fmt.Sprintf("%v is %v years old", v.Name, v.Age), nil
+}
+
+func valuer() {
+
+	println("===[ driver.Valuer ]===")
+	example := &valuerExample{Name: "Bobby Tables", Age: 12}
+	q := bqb.New("info text = ?", example)
+	q.Print()
+}
+
 func main() {
 	customTypes()
 	basic()
 	builder()
 	json()
 	nilQuery()
+	valuer()
 }
