@@ -1,6 +1,7 @@
 package bqb
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -55,10 +56,19 @@ func makePart(text string, args ...interface{}) QueryPart {
 	text = strings.ReplaceAll(text, "??", tempPh)
 
 	var newArgs []interface{}
+	errs := make([]error, 0)
 
 	for _, arg := range args {
 		switch v := arg.(type) {
 
+		case driver.Valuer:
+			text = strings.Replace(text, "?", paramPh, 1)
+			val, err := v.Value()
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				newArgs = append(newArgs, val)
+			}
 		case []int:
 			newPh := []string{}
 			for _, i := range v {
@@ -155,6 +165,7 @@ func makePart(text string, args ...interface{}) QueryPart {
 	return QueryPart{
 		Text:   text,
 		Params: newArgs,
+		Errs:   errs,
 	}
 }
 

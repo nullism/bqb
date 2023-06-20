@@ -10,6 +10,7 @@ import (
 type QueryPart struct {
 	Text   string
 	Params []interface{}
+	Errs   []error
 }
 
 // Query contains all the QueryParts for the query and is the primary
@@ -167,6 +168,10 @@ func (q *Query) toSql() (string, []interface{}, error) {
 	for _, p := range q.Parts {
 		sql += p.Text
 		params = append(params, p.Params...)
+
+		if len(p.Errs) != 0 {
+			return "", nil, errors.Join(p.Errs...)
+		}
 	}
 
 	return strings.TrimSpace(sql), params, nil

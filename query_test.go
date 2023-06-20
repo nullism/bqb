@@ -1,6 +1,8 @@
 package bqb
 
 import (
+	"database/sql/driver"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -581,5 +583,45 @@ func TestQueryTypes(t *testing.T) {
 	want := `b:true - i:1 2,2 - s:'s' 's1','s2' - ip:1 NULL 1,1 NULL - sp:'s' NULL 's','s' NULL - j:'{"a":1}' 'null'`
 	if want != sql {
 		t.Errorf("\ngot : %q\nwant: %q", sql, want)
+	}
+}
+
+type valuer []string
+
+func (v valuer) Value() (driver.Value, error) {
+	// Force an error with nil for test purposes
+	if v == nil {
+		return nil, errors.New("error creating value")
+	}
+	return strings.Join(v, "/"), nil
+}
+
+func TestValuer(t *testing.T) {
+	q := New("(?)", valuer{"a", "b", "c"})
+	sql, params, _ := q.ToSql()
+
+	if len(params) != 1 {
+		t.Errorf("invalid params")
+	}
+
+	wantSql := "(?)"
+	if sql != wantSql {
+		t.Errorf("got: %q, want: %q", sql, wantSql)
+	}
+
+	wantParam := "a/b/c"
+	if params[0].(string) != wantParam {
+		t.Errorf("got: %q, want: %q", sql, wantParam)
+	}
+}
+
+func TestValuerError(t *testing.T) {
+	var v valuer
+	q := New("?", v)
+	_, _, err := q.ToSql()
+
+	wantError := "error creating value"
+	if err.Error() != wantError {
+		t.Errorf("got: %q, want: %q", err, wantError)
 	}
 }
