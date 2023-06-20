@@ -81,6 +81,15 @@ Produces
 int:1 string:'2' []int:3,3 []string:'4','4' Query:5 JsonMap:'{"6":6}' nil:NULL []intf:'a',1,true
 ```
 
+## driver.Valuer
+
+The [driver.Valuer](https://pkg.go.dev/database/sql/driver#Valuer) interface is supported for types that are able to convert
+themselves to a sql driver value.
+
+```
+q := bqb.New("?", valuer)
+```
+
 ## Query IN
 
 Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, or `[]interface{}` are automatically expanded.
