@@ -31,6 +31,11 @@ type JsonMap map[string]interface{}
 // list without requiring reflection.
 type JsonList []interface{}
 
+
+// Identifiers is a type that tells bqb to quote the prameter and inline it rather than using query
+// parameters. This allows for (somewhat)safely parameterizing table & column names.
+type Identifiers []string
+
 func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
 	if dialect == MYSQL || dialect == SQL {
 		sql = strings.ReplaceAll(sql, paramPh, "?")
@@ -145,6 +150,9 @@ func makePart(text string, args ...interface{}) QueryPart {
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, string(bytes))
 
+		case Identifiers:
+			text = strings.Replace(text, "?", quoteIdentifiers(v), 1)
+
 		default:
 			text = strings.Replace(text, "?", paramPh, 1)
 			newArgs = append(newArgs, v)
@@ -193,4 +201,12 @@ func paramToRaw(param interface{}) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported type for Raw query: %T", p)
 	}
+}
+
+func quoteIdentifiers(names Identifiers) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = `"` + strings.Replace(name, `"`, `""`, -1) + `"`
+	}
+	return strings.Join(quoted, ".")
 }

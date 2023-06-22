@@ -135,6 +135,29 @@ INSERT INTO my_table (json_map, json_list)
 VALUES ('{"a": 1, "b": ["a","b","c"]}', '["string",1,true,null]')
 ```
 
+## Identifiers
+
+In order to facilitate parametrizing table and column names, there is an `Identifier` helper type.
+
+```golang
+sql, err := bqb.New(
+    "INSERT INTO ? t (?) VALUES (?)",
+    bqb.Identifiers{"schema", "table"},
+    bqb.Identifiers{"t", "col with spaces and \" even"},
+    1,
+).ToSql()
+```
+
+Produces
+
+```sql
+INSERT INTO "schema"."table" t ("t"."col with spaces and "" even") VALUES (?)
+```
+
+```
+PARAMS: [1]
+```
+
 ## Query Building
 
 Since queries are built in an additive way by reference rather than value, it's easy to mutate a query without

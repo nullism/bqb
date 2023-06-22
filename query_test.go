@@ -625,3 +625,22 @@ func TestValuerError(t *testing.T) {
 		t.Errorf("got: %q, want: %q", err, wantError)
 	}
 }
+
+func TestIdentifiers(t *testing.T) {
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+
+	sql, params, err := q.ToSql()
+
+	if err != nil {
+		t.Errorf("got error %v", err)
+	}
+
+	want := `SELECT "t"."foo", "t"."b""ar" FROM "table" AS t`
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+
+	if len(params) != 0 {
+		t.Errorf("got incorrect param count: %v", len(params))
+	}
+}
