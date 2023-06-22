@@ -627,7 +627,7 @@ func TestValuerError(t *testing.T) {
 }
 
 func TestIdentifiers(t *testing.T) {
-	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"}, Identifiers{"t", `b"ar`}, Identifiers{"table"})
 
 	sql, params, err := q.ToSql()
 
@@ -646,7 +646,7 @@ func TestIdentifiers(t *testing.T) {
 }
 
 func TestIdentifiersPg(t *testing.T) {
-	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"}, Identifiers{"t", `b"ar`}, Identifiers{"table"})
 
 	sql, params, err := q.ToPgsql()
 
@@ -665,7 +665,7 @@ func TestIdentifiersPg(t *testing.T) {
 }
 
 func TestIdentifiersMysql(t *testing.T) {
-	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"}, Identifiers{"t", "b`ar"}, Identifiers{"table"})
 
 	sql, params, err := q.ToMysql()
 

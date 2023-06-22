@@ -31,28 +31,33 @@ type JsonMap map[string]interface{}
 // list without requiring reflection.
 type JsonList []interface{}
 
-
 // Identifiers is a type that tells bqb to quote the prameter and inline it rather than using query
 // parameters. This allows for (somewhat)safely parameterizing table & column names.
 type Identifiers []string
 
-func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
-	if dialect == MYSQL || dialect == SQL {
-		sql = strings.ReplaceAll(sql, paramPh, "?")
-	}
+func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, []interface{}, error) {
+	newParams := make([]interface{}, 0, len(params))
 	for i, param := range params {
-		if dialect == RAW {
-			p, err := paramToRaw(param)
-			if err != nil {
-				return "", err
+		switch v := param.(type) {
+		case Identifiers:
+			sql = strings.Replace(sql, paramPh, quoteIdentifiers(v, dialect), 1)
+		default:
+			newParams = append(newParams, param)
+			if dialect == RAW {
+				p, err := paramToRaw(param)
+				if err != nil {
+					return "", nil, err
+				}
+				sql = strings.Replace(sql, paramPh, p, 1)
+			} else if dialect == PGSQL {
+				sql = strings.ReplaceAll(sql, "??", "?")
+				sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+			} else {
+				sql = strings.Replace(sql, paramPh, "?", 1)
 			}
-			sql = strings.Replace(sql, paramPh, p, 1)
-		} else if dialect == PGSQL {
-			sql = strings.ReplaceAll(sql, "??", "?")
-			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
 		}
 	}
-	return sql, nil
+	return sql, newParams, nil
 }
 
 func makePart(text string, args ...interface{}) QueryPart {
@@ -151,7 +156,8 @@ func makePart(text string, args ...interface{}) QueryPart {
 			newArgs = append(newArgs, string(bytes))
 
 		case Identifiers:
-			text = strings.Replace(text, "?", quoteIdentifiers(v), 1)
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, v)
 
 		default:
 			text = strings.Replace(text, "?", paramPh, 1)
@@ -203,10 +209,14 @@ func paramToRaw(param interface{}) (string, error) {
 	}
 }
 
-func quoteIdentifiers(names Identifiers) string {
+func quoteIdentifiers(names Identifiers, dialect Dialect) string {
+	qChar := `"`
+	if dialect == MYSQL {
+		qChar = "`"
+	}
 	quoted := make([]string, len(names))
 	for i, name := range names {
-		quoted[i] = `"` + strings.Replace(name, `"`, `""`, -1) + `"`
+		quoted[i] = qChar + strings.Replace(name, qChar, qChar+qChar, -1) + qChar
 	}
 	return strings.Join(quoted, ".")
 }

@@ -117,7 +117,7 @@ func (q *Query) ToMysql() (string, []interface{}, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(MYSQL, sql, params)
+	sql, params, err = dialectReplace(MYSQL, sql, params)
 	return sql, params, err
 }
 
@@ -127,7 +127,7 @@ func (q *Query) ToPgsql() (string, []interface{}, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(PGSQL, sql, params)
+	sql, params, err = dialectReplace(PGSQL, sql, params)
 	return sql, params, err
 }
 
@@ -139,7 +139,7 @@ func (q *Query) ToRaw() (string, error) {
 		return "", err
 	}
 
-	sql, err = dialectReplace(RAW, sql, params)
+	sql, _, err = dialectReplace(RAW, sql, params)
 	return sql, err
 }
 
@@ -150,7 +150,7 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(SQL, sql, params)
+	sql, params, err = dialectReplace(SQL, sql, params)
 	return sql, params, err
 }
 
