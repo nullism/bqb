@@ -644,3 +644,41 @@ func TestIdentifiers(t *testing.T) {
 		t.Errorf("got incorrect param count: %v", len(params))
 	}
 }
+
+func TestIdentifiersPg(t *testing.T) {
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+
+	sql, params, err := q.ToPgsql()
+
+	if err != nil {
+		t.Errorf("got error %v", err)
+	}
+
+	want := `SELECT "t"."foo", "t"."b""ar" FROM "table" AS t`
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+
+	if len(params) != 0 {
+		t.Errorf("got incorrect param count: %v", len(params))
+	}
+}
+
+func TestIdentifiersMysql(t *testing.T) {
+	q := New("SELECT ?, ? FROM ? AS t", Identifiers{"t", "foo"},  Identifiers{"t", `b"ar`}, Identifiers{"table"})
+
+	sql, params, err := q.ToMysql()
+
+	if err != nil {
+		t.Errorf("got error %v", err)
+	}
+
+	want := "SELECT `t`.`foo`, `t`.`b``ar` FROM `table` AS t"
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+
+	if len(params) != 0 {
+		t.Errorf("got incorrect param count: %v", len(params))
+	}
+}
