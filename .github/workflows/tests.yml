@@ -2,73 +2,72 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-
   coverage:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.20.5
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.20.5
 
-    - id: last_coverage
-      name: Get last coverage
-      run: |
-        echo "::set-output name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
+      - id: last_coverage
+        name: Get last coverage
+        run: |
+          echo "name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> $GITHUB_OUTPUT
 
-    - id: this_coverage
-      name: Get current coverage
-      run: |
-        go test -coverprofile=coverage.out
-        echo "::set-output name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)"
+      - id: this_coverage
+        name: Get current coverage
+        run: |
+          go test -coverprofile=coverage.out
+          echo "name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> $GITHUB_OUTPUT
 
-    - name: Function Coverage
-      run: go tool cover -func=coverage.out
+      - name: Function Coverage
+        run: go tool cover -func=coverage.out
 
-    - id: coverage_dropped
-      name: Check if coverage dropped
-      run: |
-        cov_drop=$(echo ${{steps.last_coverage.outputs.COV}}'>'${{steps.this_coverage.outputs.COV}} | bc -l)
-        echo "Has it dropped? $cov_drop"
-        echo "::set-output name=DROP::$cov_drop"
+      - id: coverage_dropped
+        name: Check if coverage dropped
+        run: |
+          cov_drop=$(echo ${{steps.last_coverage.outputs.COV}}'>'${{steps.this_coverage.outputs.COV}} | bc -l)
+          echo "Has it dropped? $cov_drop"
+          echo "name=DROP::$cov_drop" >> $GITHUB_OUTPUT
 
-    - name: If coverage has dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == '1' }}
-      run: |
-        echo "Coverage has dropped from ${{ steps.last_coverage.outputs.COV }}% to ${{ steps.this_coverage.outputs.COV }}%"
-        exit 1
+      - name: If coverage has dropped
+        if: ${{ steps.coverage_dropped.outputs.DROP == '1' }}
+        run: |
+          echo "Coverage has dropped from ${{ steps.last_coverage.outputs.COV }}% to ${{ steps.this_coverage.outputs.COV }}%"
+          exit 1
 
-    - name: If coverage has not dropped
-      if: ${{ steps.coverage_dropped.outputs.DROP == '0' }}
-      run: |
-        echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
+      - name: If coverage has not dropped
+        if: ${{ steps.coverage_dropped.outputs.DROP == '0' }}
+        run: |
+          echo -e "Previous coverage: ${{ steps.last_coverage.outputs.COV }}\nCurrent coverage: ${{ steps.this_coverage.outputs.COV }}"
 
-    - name: Get coverage badge
-      run: |
-        total=${{ steps.this_coverage.outputs.COV }}
-        curl "https://img.shields.io/badge/coverage-$total%25-green" > coverage.svg
+      - name: Get coverage badge
+        run: |
+          total=${{ steps.this_coverage.outputs.COV }}
+          curl "https://img.shields.io/badge/coverage-$total%25-green" > coverage.svg
 
-    - name: Add coverage info
-      uses: EndBug/add-and-commit@v7
-      with:
-        add: 'coverage.svg coverage.out'
-        message: "Update coverage.svg and coverage.out"
+      - name: Add coverage info
+        uses: EndBug/add-and-commit@v7
+        with:
+          add: "coverage.svg coverage.out"
+          message: "Update coverage.svg and coverage.out"
 
-    - name: Convert to LCOV
-      uses: jandelgado/gcov2lcov-action@v1.0.8
-      with:
-        infile: coverage.out
-        outfile: lcov.info
+      - name: Convert to LCOV
+        uses: jandelgado/gcov2lcov-action@v1.0.8
+        with:
+          infile: coverage.out
+          outfile: lcov.info
 
-    - name: Minimum coverage 100%
-      uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
-      with:
-        path: lcov.info
-        min_coverage: 100
+      - name: Minimum coverage 100%
+        uses: VeryGoodOpenSource/very_good_coverage@v1.2.0
+        with:
+          path: lcov.info
+          min_coverage: 100
