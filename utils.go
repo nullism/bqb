@@ -61,6 +61,9 @@ func makePart(text string, args ...interface{}) QueryPart {
 	for _, arg := range args {
 		switch v := arg.(type) {
 
+		case Embedder:
+			text = strings.Replace(text, "?", v.RawValue(), 1)
+
 		case driver.Valuer:
 			text = strings.Replace(text, "?", paramPh, 1)
 			val, err := v.Value()
