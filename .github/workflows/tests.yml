@@ -20,13 +20,13 @@ jobs:
       - id: last_coverage
         name: Get last coverage
         run: |
-          echo "name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> "$GITHUB_OUTPUT"
+          echo "COV=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> "$GITHUB_OUTPUT"
 
       - id: this_coverage
         name: Get current coverage
         run: |
           go test -coverprofile=coverage.out
-          echo "name=COV::$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> "$GITHUB_OUTPUT"
+          echo "COV=$(go tool cover -func=coverage.out | tail -1 | awk '{ print $3 }' | sed s/%//g)" >> "$GITHUB_OUTPUT"
 
       - name: Function Coverage
         run: go tool cover -func=coverage.out
@@ -36,7 +36,7 @@ jobs:
         run: |
           cov_drop=$(echo ${{steps.last_coverage.outputs.COV}}'>'${{steps.this_coverage.outputs.COV}} | bc -l)
           echo "Has it dropped? $cov_drop"
-          echo "name=DROP::$cov_drop" >> "$GITHUB_OUTPUT"
+          echo "DROP=$cov_drop" >> "$GITHUB_OUTPUT"
 
       - name: If coverage has dropped
         if: ${{ steps.coverage_dropped.outputs.DROP == '1' }}
