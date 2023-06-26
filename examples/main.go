@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql/driver"
 	"fmt"
+	"strings"
 
 	"github.com/nullism/bqb"
 )
@@ -100,10 +101,27 @@ func (v valuerExample) Value() (driver.Value, error) {
 }
 
 func valuer() {
-
 	println("===[ driver.Valuer ]===")
 	example := &valuerExample{Name: "Bobby Tables", Age: 12}
 	q := bqb.New("info text = ?", example)
+	q.Print()
+}
+
+type embedderExample []string
+
+func (e embedderExample) RawValue() string {
+	parts := []string{}
+	for _, v := range e {
+		part := fmt.Sprintf(`"%v"`, strings.ReplaceAll(v, `"`, `""`))
+		parts = append(parts, part)
+	}
+	return strings.Join(parts, ".")
+}
+
+func embedder() {
+	println("===[ Embedder ]===")
+	emb := embedderExample{"one", "two", `"three"`}
+	q := bqb.New("embedded: ?, unembedded: ?", emb, "bound")
 	q.Print()
 }
 
@@ -114,4 +132,5 @@ func main() {
 	json()
 	nilQuery()
 	valuer()
+	embedder()
 }
