@@ -56,7 +56,7 @@ func TestEmbedder(t *testing.T) {
 
 	sortq := New("SELECT * FROM my_table ORDER BY name ?,?", down, up)
 	want = "SELECT * FROM my_table ORDER BY name DESC,ASC"
-	got, _, _ := sortq.ToSql()
+	got, _ := sortq.ToRaw()
 	if got != want {
 		t.Errorf("\n got:%v\nwant:%v", got, want)
 	}
