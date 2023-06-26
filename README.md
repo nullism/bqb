@@ -96,6 +96,14 @@ themselves to a sql driver value. See [examples/main.go:valuer](./examples/main.
 q := bqb.New("?", valuer)
 ```
 
+### Embedder
+
+BQB provides an Embedder interface for directly replacing `?` with a string returned by the `RawValue` method on the Embedder implementation.
+
+This can be useful for changing sort direction or embedding table and column names. See [examples/main.go:embedder](./examples/main.go#L122) for an example.
+
+_Note: Since this is a raw value, special attention should be paid to ensure user-input is checked and sanitized._
+
 ## Query IN
 
 Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, or `[]interface{}` are automatically expanded.
