@@ -227,7 +227,7 @@ func TestParamsFunc(t *testing.T) {
 }
 
 func TestParamsInterfaceList(t *testing.T) {
-	sql, err := New("?", []interface{}{"a", 1, true}).ToRaw()
+	sql, err := New("?", []any{"a", 1, true}).ToRaw()
 	if err != nil {
 		t.Errorf("got error %v", err)
 	}
@@ -436,7 +436,7 @@ func TestQuery_ToRaw(t *testing.T) {
 
 func TestQuery_ToSql(t *testing.T) {
 	text := "bool:? float:? int:? string:? []int:? []string:? Query:? Json:? nil:?"
-	args := []interface{}{
+	args := []any{
 		true, 1.5, 1, "test", []int{1, 2}, []string{"a", "b", "c"}, New("(Q ?)", "q"), &JsonMap{"a": 1}, nil,
 	}
 
@@ -446,7 +446,7 @@ func TestQuery_ToSql(t *testing.T) {
 		t.Errorf("got error: %v", err)
 	}
 
-	wantP := []interface{}{
+	wantP := []any{
 		true, 1.5, 1, "test", 1, 2, "a", "b", "c", "q", `{"a":1}`, nil,
 	}
 	want := "bool:? float:? int:? string:? []int:?,? []string:?,?,? Query:(Q ?) Json:? nil:?"

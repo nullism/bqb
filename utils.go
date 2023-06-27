@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, error) {
+func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
 	if dialect == MYSQL || dialect == SQL {
 		sql = strings.ReplaceAll(sql, paramPh, "?")
 	}
@@ -26,108 +26,122 @@ func dialectReplace(dialect Dialect, sql string, params []interface{}) (string, 
 	return sql, nil
 }
 
-func makePart(text string, args ...interface{}) QueryPart {
+func convertArg(text string, arg any) (string, []any, []error) {
+	var newArgs []any
+	var errs []error
+
+	switch v := arg.(type) {
+
+	case Embedder:
+		text = strings.Replace(text, "?", v.RawValue(), 1)
+
+	case driver.Valuer:
+		text = strings.Replace(text, "?", paramPh, 1)
+		val, err := v.Value()
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			newArgs = append(newArgs, val)
+		}
+	case []int:
+		newPh := []string{}
+		for _, i := range v {
+			newPh = append(newPh, paramPh)
+			newArgs = append(newArgs, i)
+		}
+		text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+
+	case []*int:
+		newPh := []string{}
+		for _, i := range v {
+			newPh = append(newPh, paramPh)
+			newArgs = append(newArgs, i)
+		}
+		if len(newPh) > 0 {
+			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+		} else {
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, nil)
+		}
+
+	case []string:
+		newPh := []string{}
+		for _, s := range v {
+			newPh = append(newPh, paramPh)
+			newArgs = append(newArgs, s)
+		}
+		text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+
+	case []*string:
+		newPh := []string{}
+		for _, s := range v {
+			newPh = append(newPh, paramPh)
+			newArgs = append(newArgs, s)
+		}
+		if len(newPh) > 0 {
+			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+		} else {
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, nil)
+		}
+
+	case []any:
+		newPh := []string{}
+		for _, s := range v {
+			newPh = append(newPh, paramPh)
+			newArgs = append(newArgs, s)
+		}
+		text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
+
+	case *Query:
+		if v == nil {
+			text = strings.Replace(text, "?", paramPh, 1)
+			newArgs = append(newArgs, nil)
+			return text, newArgs, errs
+		}
+		sql, params, _ := v.toSql()
+		text = strings.Replace(text, "?", sql, 1)
+		newArgs = append(newArgs, params...)
+
+	case JsonMap, JsonList:
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			panic(fmt.Sprintf("cann jsonify struct: %v", err))
+		}
+		text = strings.Replace(text, "?", paramPh, 1)
+		newArgs = append(newArgs, string(bytes))
+
+	case *JsonMap, *JsonList:
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			panic(fmt.Sprintf("cann jsonify struct: %v", err))
+		}
+		text = strings.Replace(text, "?", paramPh, 1)
+		newArgs = append(newArgs, string(bytes))
+
+	default:
+		text = strings.Replace(text, "?", paramPh, 1)
+		newArgs = append(newArgs, v)
+	}
+
+	return text, newArgs, errs
+}
+
+func makePart(text string, args ...any) QueryPart {
 	tempPh := "XXX___XXX"
 	originalText := text
 	text = strings.ReplaceAll(text, "??", tempPh)
 
-	var newArgs []interface{}
+	var newArgs []any
 	errs := make([]error, 0)
 
 	for _, arg := range args {
-		switch v := arg.(type) {
-
-		case Embedder:
-			text = strings.Replace(text, "?", v.RawValue(), 1)
-
-		case driver.Valuer:
-			text = strings.Replace(text, "?", paramPh, 1)
-			val, err := v.Value()
-			if err != nil {
-				errs = append(errs, err)
-			} else {
-				newArgs = append(newArgs, val)
-			}
-		case []int:
-			newPh := []string{}
-			for _, i := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, i)
-			}
-			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-
-		case []*int:
-			newPh := []string{}
-			for _, i := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, i)
-			}
-			if len(newPh) > 0 {
-				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-			} else {
-				text = strings.Replace(text, "?", paramPh, 1)
-				newArgs = append(newArgs, nil)
-			}
-
-		case []string:
-			newPh := []string{}
-			for _, s := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, s)
-			}
-			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-
-		case []*string:
-			newPh := []string{}
-			for _, s := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, s)
-			}
-			if len(newPh) > 0 {
-				text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-			} else {
-				text = strings.Replace(text, "?", paramPh, 1)
-				newArgs = append(newArgs, nil)
-			}
-
-		case []interface{}:
-			newPh := []string{}
-			for _, s := range v {
-				newPh = append(newPh, paramPh)
-				newArgs = append(newArgs, s)
-			}
-			text = strings.Replace(text, "?", strings.Join(newPh, ","), 1)
-
-		case *Query:
-			if v == nil {
-				text = strings.Replace(text, "?", paramPh, 1)
-				newArgs = append(newArgs, nil)
-				continue
-			}
-			sql, params, _ := v.toSql()
-			text = strings.Replace(text, "?", sql, 1)
-			newArgs = append(newArgs, params...)
-
-		case JsonMap, JsonList:
-			bytes, err := json.Marshal(v)
-			if err != nil {
-				panic(fmt.Sprintf("cann jsonify struct: %v", err))
-			}
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, string(bytes))
-
-		case *JsonMap, *JsonList:
-			bytes, err := json.Marshal(v)
-			if err != nil {
-				panic(fmt.Sprintf("cann jsonify struct: %v", err))
-			}
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, string(bytes))
-
-		default:
-			text = strings.Replace(text, "?", paramPh, 1)
-			newArgs = append(newArgs, v)
+		argText, fArgs, argErrs := convertArg(text, arg)
+		if len(argErrs) > 0 {
+			errs = append(errs, argErrs...)
 		}
+		newArgs = append(newArgs, fArgs...)
+		text = argText
 	}
 	extraCount := strings.Count(text, "?")
 	if extraCount > 0 {
@@ -148,7 +162,7 @@ func makePart(text string, args ...interface{}) QueryPart {
 	}
 }
 
-func paramToRaw(param interface{}) (string, error) {
+func paramToRaw(param any) (string, error) {
 	switch p := param.(type) {
 	case bool:
 		return fmt.Sprintf("%v", p), nil

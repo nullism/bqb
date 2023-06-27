@@ -9,7 +9,7 @@ import (
 // QueryPart holds a section of a Query.
 type QueryPart struct {
 	Text   string
-	Params []interface{}
+	Params []any
 	Errs   []error
 }
 
@@ -21,7 +21,7 @@ type Query struct {
 }
 
 // New returns an instance of Query with a single QueryPart.
-func New(text string, args ...interface{}) *Query {
+func New(text string, args ...any) *Query {
 	q := Q()
 	q.Parts = append(q.Parts, makePart(text, args...))
 	return q
@@ -41,7 +41,7 @@ func Optional(prefix string) *Query {
 }
 
 // And joins the current QueryPart to the previous QueryPart with ' AND '.
-func (q *Query) And(text string, args ...interface{}) *Query {
+func (q *Query) And(text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -49,7 +49,7 @@ func (q *Query) And(text string, args ...interface{}) *Query {
 }
 
 // Comma joins the current QueryPart to the previous QueryPart with a comma.
-func (q *Query) Comma(text string, args ...interface{}) *Query {
+func (q *Query) Comma(text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -58,7 +58,7 @@ func (q *Query) Comma(text string, args ...interface{}) *Query {
 
 // Concat concatenates the current QueryPart to the previous QueryPart with a
 // zero space string.
-func (q *Query) Concat(text string, args ...interface{}) *Query {
+func (q *Query) Concat(text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -66,7 +66,7 @@ func (q *Query) Concat(text string, args ...interface{}) *Query {
 }
 
 // Join joins the current QueryPart to the previous QueryPart with `sep`.
-func (q *Query) Join(sep, text string, args ...interface{}) *Query {
+func (q *Query) Join(sep, text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -88,7 +88,7 @@ func (q *Query) Len() int {
 }
 
 // Or joins the current QueryPart to the previous QueryPart with ' OR '.
-func (q *Query) Or(text string, args ...interface{}) *Query {
+func (q *Query) Or(text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -104,7 +104,7 @@ func (q *Query) Print() {
 }
 
 // Space joins the current QueryPart to the previous QueryPart with a space.
-func (q *Query) Space(text string, args ...interface{}) *Query {
+func (q *Query) Space(text string, args ...any) *Query {
 	if q == nil {
 		return New(text, args...)
 	}
@@ -112,7 +112,7 @@ func (q *Query) Space(text string, args ...interface{}) *Query {
 }
 
 // ToMysql returns the sql placeholders with SQL (?) format used by MySQL
-func (q *Query) ToMysql() (string, []interface{}, error) {
+func (q *Query) ToMysql() (string, []any, error) {
 	sql, params, err := q.toSql()
 	if err != nil {
 		return "", nil, err
@@ -122,7 +122,7 @@ func (q *Query) ToMysql() (string, []interface{}, error) {
 }
 
 // ToPgsql returns the sql placeholders with dollarsign format used by postgres.
-func (q *Query) ToPgsql() (string, []interface{}, error) {
+func (q *Query) ToPgsql() (string, []any, error) {
 	sql, params, err := q.toSql()
 	if err != nil {
 		return "", nil, err
@@ -145,7 +145,7 @@ func (q *Query) ToRaw() (string, error) {
 
 // ToSql returns the placeholders with question (?) format used by most
 // databases such as sqlite, mysql, and others.
-func (q *Query) ToSql() (string, []interface{}, error) {
+func (q *Query) ToSql() (string, []any, error) {
 	sql, params, err := q.toSql()
 	if err != nil {
 		return "", nil, err
@@ -154,12 +154,12 @@ func (q *Query) ToSql() (string, []interface{}, error) {
 	return sql, params, err
 }
 
-func (q *Query) toSql() (string, []interface{}, error) {
+func (q *Query) toSql() (string, []any, error) {
 	if q == nil {
 		return "", nil, errors.New("cannot get sql on nil Query")
 	}
 	var sql string
-	var params []interface{}
+	var params []any
 
 	if q.OptionalPrefix != "" && len(q.Parts) > 0 {
 		sql = q.OptionalPrefix + " "
