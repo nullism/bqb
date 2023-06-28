@@ -117,7 +117,7 @@ func TestJsonPointer(t *testing.T) {
 func TestOptional(t *testing.T) {
 	sel := Optional("you should not see this")
 
-	if !sel.Empty() && sel.Len() != 0 {
+	if !sel.Empty() || sel.Len() != 0 {
 		t.Errorf("Optional is not empty")
 	}
 
