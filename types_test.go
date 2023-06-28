@@ -60,5 +60,22 @@ func TestEmbedder(t *testing.T) {
 	if got != want {
 		t.Errorf("\n got:%v\nwant:%v", got, want)
 	}
+}
 
+func TestUnbound(t *testing.T) {
+	q := New("SELECT ? FROM ? WHERE ?=?", Unbound("col"), Unbound("table"), Unbound("id"), "123")
+	sql, args, err := q.ToSql()
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	want := "SELECT col FROM table WHERE id=?"
+	if want != sql {
+		t.Errorf("\n got:%v\nwant:%v", sql, want)
+	}
+
+	if args[0] != "123" {
+		t.Errorf("got unexpected args: %v", args)
+	}
 }

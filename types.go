@@ -30,3 +30,7 @@ type JsonMap map[string]interface{}
 // JsonList is a type that tells bqb to convert the parameter to a JSON
 // list without requiring reflection.
 type JsonList []interface{}
+
+// Unbound is a string that is directly embedded into the query.
+// Note: Like Embedder, this is not to be used for untrusted input.
+type Unbound string
