@@ -65,6 +65,14 @@ func (q *Query) Concat(text string, args ...any) *Query {
 	return q.Join("", text, args...)
 }
 
+// Empty returns true if the Query is nil or has a length > 0.
+func (q *Query) Empty() bool {
+	if q == nil {
+		return true
+	}
+	return q.Len() == 0
+}
+
 // Join joins the current QueryPart to the previous QueryPart with `sep`.
 func (q *Query) Join(sep, text string, args ...any) *Query {
 	if q == nil {

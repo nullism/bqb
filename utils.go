@@ -119,6 +119,9 @@ func convertArg(text string, arg any) (string, []any, []error) {
 		text = strings.Replace(text, "?", paramPh, 1)
 		newArgs = append(newArgs, string(bytes))
 
+	case Embedded:
+		text = strings.Replace(text, "?", string(v), 1)
+
 	default:
 		text = strings.Replace(text, "?", paramPh, 1)
 		newArgs = append(newArgs, v)

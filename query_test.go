@@ -116,6 +116,11 @@ func TestJsonPointer(t *testing.T) {
 
 func TestOptional(t *testing.T) {
 	sel := Optional("you should not see this")
+
+	if !sel.Empty() || sel.Len() != 0 {
+		t.Errorf("Optional is not empty")
+	}
+
 	sql, _ := sel.ToRaw()
 
 	if sql != "" {
@@ -123,6 +128,10 @@ func TestOptional(t *testing.T) {
 	}
 
 	sel.Space("but now you can")
+
+	if sel.Empty() || sel.Len() == 0 {
+		t.Errorf("Optional should not be empty when extended")
+	}
 
 	sql, _ = sel.ToRaw()
 	want := "you should not see this but now you can"
@@ -170,6 +179,10 @@ func TestNils(t *testing.T) {
 	_, _, err = qNil.ToPgsql()
 	if err == nil {
 		t.Errorf("expected error for qNil")
+	}
+
+	if !qNil.Empty() {
+		t.Errorf("expected Empty == true for qNil")
 	}
 
 	qNil.Join("", "test")

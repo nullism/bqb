@@ -240,8 +240,7 @@ SELECT * FROM my_table LIMIT 10
 
 Methods on the bqb `Query` struct follow the same pattern.
 
-That is the method name indicates how to join the new part to the existing query.
-And all methods take a string (the query text) and variable length interface (the query args).
+All query-modifying methods take a string (the query text) and variable length interface (the query args).
 
 For example `q.And("abc")` will add `AND abc` to the query.
 
@@ -249,7 +248,11 @@ Take the following
 
 ```golang
 q := bqb.Optional("WHERE")
+q.Empty() // returns true
+q.Len() // returns 0
 q.Space("1 = 2") // query is now WHERE 1 = 2
+q.Empty() // returns false
+q.Len() // returns 1
 q.And("b") // query is now WHERE 1 = 2 AND b
 q.Or("c") // query is now WHERE 1 = 2 AND b OR c
 q.Concat("d") // query is now WHERE 1 = 2 AND b OR cd
@@ -257,15 +260,15 @@ q.Comma("e") // query is now WHERE 1 = 2 AND b OR cd,e
 q.Join("+", "f") // query is now WHERE 1 = 2 AND b OR cd,e+f
 ```
 
-Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, or `[]string`.
+Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, `Embedder`, `Embedded`, `driver.Valuer` or `[]string`.
 
 # Frequently Asked Questions
 
 ## Is there more documentation?
 
-It's not really necessary because the API is so tiny and public methods are documented in code.
-Most of the documentation will be around how to use SQL.
-However, you can check out the [tests](./query_test.go) to see the variety of usages.
+It's not really necessary because the API is so tiny and public methods are documented in code,
+see [godoc](https://godoc.org/github.com/nullism/bqb).
+However, you can check out the [tests](./query_test.go) and [examples](./examples/main.go) to see the variety of usages.
 
 ## Why not just use a string builder?
 
