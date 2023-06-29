@@ -66,12 +66,18 @@ func TestJson(t *testing.T) {
 	}
 
 	q = New("?", JsonMap{"a": func() {}})
-	_, _, err := q.ToSql()
+	badsql, badargs, err := q.ToSql()
 	if err == nil {
 		t.Errorf("expected error with invalid JsonMap")
 	}
 	if !strings.Contains(err.Error(), "jsonify") {
 		t.Errorf("invalid error from *JsonMap failure")
+	}
+	if badsql != "" {
+		t.Errorf("expected emtpy SQL but got %v instead", badsql)
+	}
+	if len(badargs) > 0 {
+		t.Errorf("expected no args but got %v instead", badargs)
 	}
 }
 
