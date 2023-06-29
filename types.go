@@ -31,6 +31,6 @@ type JsonMap map[string]interface{}
 // list without requiring reflection.
 type JsonList []interface{}
 
-// Unbound is a string that is directly embedded into the query.
+// Embedded is a string type that is directly embedded into the query.
 // Note: Like Embedder, this is not to be used for untrusted input.
-type Unbound string
+type Embedded string

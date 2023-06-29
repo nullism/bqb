@@ -62,8 +62,8 @@ func TestEmbedder(t *testing.T) {
 	}
 }
 
-func TestUnbound(t *testing.T) {
-	q := New("SELECT ? FROM ? WHERE ?=?", Unbound("col"), Unbound("table"), Unbound("id"), "123")
+func TestEmbedded(t *testing.T) {
+	q := New("SELECT ? FROM ? WHERE ?=?", Embedded("col"), Embedded("table"), Embedded("id"), "123")
 	sql, args, err := q.ToSql()
 
 	if err != nil {
