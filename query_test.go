@@ -74,7 +74,7 @@ func TestJson(t *testing.T) {
 		t.Errorf("invalid error from *JsonMap failure")
 	}
 	if badsql != "" {
-		t.Errorf("expected emtpy SQL but got %v instead", badsql)
+		t.Errorf("expected empty SQL but got %v instead", badsql)
 	}
 	if len(badargs) > 0 {
 		t.Errorf("expected no args but got %v instead", badargs)
