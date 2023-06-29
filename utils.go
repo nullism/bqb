@@ -104,20 +104,22 @@ func convertArg(text string, arg any) (string, []any, []error) {
 		newArgs = append(newArgs, params...)
 
 	case JsonMap, JsonList:
+		text = strings.Replace(text, "?", paramPh, 1)
 		bytes, err := json.Marshal(v)
 		if err != nil {
-			panic(fmt.Sprintf("cann jsonify struct: %v", err))
+			errs = append(errs, fmt.Errorf("cann jsonify struct: %v", err))
+		} else {
+			newArgs = append(newArgs, string(bytes))
 		}
-		text = strings.Replace(text, "?", paramPh, 1)
-		newArgs = append(newArgs, string(bytes))
 
 	case *JsonMap, *JsonList:
+		text = strings.Replace(text, "?", paramPh, 1)
 		bytes, err := json.Marshal(v)
 		if err != nil {
-			panic(fmt.Sprintf("cann jsonify struct: %v", err))
+			errs = append(errs, fmt.Errorf("cann jsonify struct: %v", err))
+		} else {
+			newArgs = append(newArgs, string(bytes))
 		}
-		text = strings.Replace(text, "?", paramPh, 1)
-		newArgs = append(newArgs, string(bytes))
 
 	case Embedded:
 		text = strings.Replace(text, "?", string(v), 1)
@@ -128,6 +130,19 @@ func convertArg(text string, arg any) (string, []any, []error) {
 	}
 
 	return text, newArgs, errs
+}
+
+func checkParamCounts(text, original string, args []any) error {
+	extraCount := strings.Count(text, "?")
+	if extraCount > 0 {
+		return fmt.Errorf("extra ? in text: %v (%d args)", original, len(args))
+	}
+
+	paramCount := strings.Count(text, paramPh)
+	if paramCount < len(args) {
+		return fmt.Errorf("missing ? in text: %v (%d args)", original, len(args))
+	}
+	return nil
 }
 
 func makePart(text string, args ...any) QueryPart {
@@ -146,14 +161,9 @@ func makePart(text string, args ...any) QueryPart {
 		newArgs = append(newArgs, fArgs...)
 		text = argText
 	}
-	extraCount := strings.Count(text, "?")
-	if extraCount > 0 {
-		panic(fmt.Sprintf("extra ? in text: %v (%d args)", originalText, len(newArgs)))
-	}
 
-	paramCount := strings.Count(text, paramPh)
-	if paramCount < len(newArgs) {
-		panic(fmt.Sprintf("missing ? in text: %v (%d args)", originalText, len(newArgs)))
+	if err := checkParamCounts(text, originalText, newArgs); err != nil {
+		errs = append(errs, err)
 	}
 
 	text = strings.ReplaceAll(text, tempPh, "??")

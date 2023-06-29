@@ -65,15 +65,20 @@ func TestJson(t *testing.T) {
 		t.Errorf("got: %q, want: %q", sql, jlwant)
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "jsonify") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
-	New("?", JsonMap{"a": func() {}})
-	t.Errorf("didn't panic")
+	q = New("?", JsonMap{"a": func() {}})
+	badsql, badargs, err := q.ToSql()
+	if err == nil {
+		t.Errorf("expected error with invalid JsonMap")
+	}
+	if !strings.Contains(err.Error(), "jsonify") {
+		t.Errorf("invalid error from *JsonMap failure")
+	}
+	if badsql != "" {
+		t.Errorf("expected emtpy SQL but got %v instead", badsql)
+	}
+	if len(badargs) > 0 {
+		t.Errorf("expected no args but got %v instead", badargs)
+	}
 }
 
 func TestJsonPointer(t *testing.T) {
@@ -103,15 +108,15 @@ func TestJsonPointer(t *testing.T) {
 		t.Errorf("got: %q, want: %q", sql, jlwant)
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "jsonify") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
-	New("?", &JsonMap{"a": func() {}})
-	t.Errorf("didn't panic")
+	q = New("?", &JsonMap{"a": func() {}})
+	_, _, err := q.ToSql()
+	if err == nil {
+		t.Errorf("expected error for invalid *JsonMap")
+	}
+	if !strings.Contains(err.Error(), "jsonify") {
+		t.Errorf("invalid error from *JsonMap failure")
+	}
+
 }
 
 func TestOptional(t *testing.T) {
@@ -210,16 +215,14 @@ func TestNils(t *testing.T) {
 }
 
 func TestParamsExtra(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "extra") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
-
-	New("params ? ?", 1)
-	t.Errorf("extra ? considered valid")
+	q := New("params ? ?", 1)
+	_, _, err := q.ToSql()
+	if err == nil {
+		t.Errorf("no error for extra ?")
+	}
+	if !strings.Contains(err.Error(), "extra") {
+		t.Errorf("got wrong error for extra ?")
+	}
 }
 
 func TestParamsFunc(t *testing.T) {
@@ -252,16 +255,14 @@ func TestParamsInterfaceList(t *testing.T) {
 }
 
 func TestParamsMissing(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			if !strings.Contains(r.(string), "missing") {
-				t.Errorf("invalid panic for missing params: %v", r)
-			}
-		}
-	}()
-
-	New("params ?", 1, 2)
-	t.Errorf("missing ? considered valid")
+	q := New("params ?", 1, 2)
+	_, _, err := q.ToSql()
+	if err == nil {
+		t.Errorf("missing ? considered valid")
+	}
+	if !strings.Contains(err.Error(), "missing") {
+		t.Errorf("got wrong error for missing ?")
+	}
 }
 
 func TestQuery(t *testing.T) {
