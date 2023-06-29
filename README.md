@@ -173,8 +173,8 @@ SELECT id,age,email
 ### Advanced Example
 
 The `Optional(string)` function returns a query that resolves to an empty string if no query parts have
-been added via methods on the query instance. For example `q := Optional("SELECT")` will resolve to
-an empty string unless parts have been added by one of the methods,
+been added via methods on the query instance, and joins with a space to the next query part. 
+For example `q := Optional("SELECT")` will resolve to an empty string unless parts have been added by one of the methods,
 e.g `q.Space("* FROM my_table")` would make `q.ToSql()` resolve to `SELECT * FROM my_table`.
 
 ```golang
