@@ -132,7 +132,7 @@ func convertArg(text string, arg any) (string, []any, []error) {
 	return text, newArgs, errs
 }
 
-func checkCounts(text, original string, args []any) error {
+func checkParamCounts(text, original string, args []any) error {
 	extraCount := strings.Count(text, "?")
 	if extraCount > 0 {
 		return fmt.Errorf("extra ? in text: %v (%d args)", original, len(args))
@@ -162,7 +162,7 @@ func makePart(text string, args ...any) QueryPart {
 		text = argText
 	}
 
-	if err := checkCounts(text, originalText, newArgs); err != nil {
+	if err := checkParamCounts(text, originalText, newArgs); err != nil {
 		errs = append(errs, err)
 	}
 
