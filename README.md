@@ -260,7 +260,7 @@ q.Comma("e") // query is now WHERE 1 = 2 AND b OR cd,e
 q.Join("+", "f") // query is now WHERE 1 = 2 AND b OR cd,e+f
 ```
 
-Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, `Embedder`, `Unbound`, `driver.Valuer` or `[]string`.
+Valid `args` include `string`, `int`, `floatN`, `*Query`, `[]int`, `Embedder`, `Embedded`, `driver.Valuer` or `[]string`.
 
 # Frequently Asked Questions
 

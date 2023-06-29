@@ -16,6 +16,10 @@ const (
 	paramPh = "{{xX_PARAM_Xx}}"
 )
 
+// Embedded is a string type that is directly embedded into the query.
+// Note: Like Embedder, this is not to be used for untrusted input.
+type Embedded string
+
 // Embedder embeds a value directly into a query string.
 // Note: Since this is embedded and not bound,
 // attention must be paid to sanitizing this input.
@@ -30,7 +34,3 @@ type JsonMap map[string]interface{}
 // JsonList is a type that tells bqb to convert the parameter to a JSON
 // list without requiring reflection.
 type JsonList []interface{}
-
-// Embedded is a string type that is directly embedded into the query.
-// Note: Like Embedder, this is not to be used for untrusted input.
-type Embedded string
