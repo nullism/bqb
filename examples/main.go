@@ -118,6 +118,12 @@ func (e embedderExample) RawValue() string {
 	return strings.Join(parts, ".")
 }
 
+func embedded() {
+	println("===[ Embedded ]===")
+	q := bqb.New("embedded: ?, unembedded: ?", bqb.Embedded("raw"), "bound")
+	q.Print()
+}
+
 func embedder() {
 	println("===[ Embedder ]===")
 	emb := embedderExample{"one", "two", `"three"`}
@@ -132,5 +138,6 @@ func main() {
 	json()
 	nilQuery()
 	valuer()
+	embedded()
 	embedder()
 }
