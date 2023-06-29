@@ -60,6 +60,15 @@ func TestEmbedder(t *testing.T) {
 	if got != want {
 		t.Errorf("\n got:%v\nwant:%v", got, want)
 	}
+
+	sql, err = q.ToRaw()
+	if err != nil {
+		t.Errorf("got error from ToRaw(): %v", err)
+	}
+	want = "SELECT id FROM schema.table WHERE name='bound'"
+	if sql != want {
+		t.Errorf("\n got:%v\nwant:%v", sql, want)
+	}
 }
 
 func TestEmbedded(t *testing.T) {
@@ -78,4 +87,14 @@ func TestEmbedded(t *testing.T) {
 	if args[0] != "123" {
 		t.Errorf("got unexpected args: %v", args)
 	}
+
+	sql, err = q.ToRaw()
+	if err != nil {
+		t.Errorf("got error from ToRaw(): %v", err)
+	}
+	want = "SELECT col FROM table WHERE id='123'"
+	if sql != want {
+		t.Errorf("\n got:%v\nwant:%v", sql, want)
+	}
+
 }

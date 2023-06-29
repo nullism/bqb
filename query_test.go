@@ -440,7 +440,10 @@ func TestQuery_ToRaw(t *testing.T) {
 		"bool:? float:? int:? string:? []int:? []string:? Query:? Json:? nil:?",
 		true, 1.5, 1, "2", []int{3, 3}, []string{"4", "4"}, New("5"), JsonMap{"6": 6}, nil,
 	)
-	sql, _ := q.ToRaw()
+	sql, err := q.ToRaw()
+	if err != nil {
+		t.Errorf("got error from ToRaw(): %v", err)
+	}
 
 	want := "bool:true float:1.5 int:1 string:'2' []int:3,3 []string:'4','4' Query:5 Json:'{\"6\":6}' nil:NULL"
 	if want != sql {
@@ -626,6 +629,14 @@ func TestValuer(t *testing.T) {
 	wantParam := "a/b/c"
 	if params[0].(string) != wantParam {
 		t.Errorf("got: %q, want: %q", sql, wantParam)
+	}
+
+	sql, err := q.ToRaw()
+	if err != nil {
+		t.Errorf("got error from valuer ToRaw(): %v", err)
+	}
+	if sql != "('a/b/c')" {
+		t.Errorf("got unexpected value from ToRaw(): %v", sql)
 	}
 }
 
