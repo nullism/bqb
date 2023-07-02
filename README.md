@@ -7,6 +7,8 @@
 This has been tested with sqlite, PostGres, and MySQL, using `database/sql`, `pq`, `pgx`, and `sqlx`.
 By the nature of how it works it should be fully compatible with any DB interface and database that uses `?` or `$` parameter syntax.
 
+_Note: Go v1.20+ is required for BQB `>= v1.4.0`. Go `v1.17+` is required for BQB `<= v1.3.0`._
+
 # Why
 
 1. Simple, lightweight, and fast
