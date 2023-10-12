@@ -119,6 +119,25 @@ func TestJsonPointer(t *testing.T) {
 
 }
 
+func TestErrorSubquery(t *testing.T) {
+	// One more ? than we are passing args for
+	subQuery := New("SELECT id FROM table2 WHERE id = ? and value = ?", 1)
+
+	// It gives an error when the query is directly turned to sql
+	_, _, err := subQuery.ToSql()
+	if err == nil || !strings.Contains(err.Error(), "extra ? in text") {
+		t.Errorf("expected error for subquery")
+	}
+
+	// But if you pass it into another query instead there is no error and the sql it spits out will be
+	// "SELECT * FROM table WHERE id IN ()" which is not what I would expect
+	q := New("SELECT * FROM table WHERE id IN (?)", subQuery)
+	_, _, err = q.ToSql()
+	if err == nil || !strings.Contains(err.Error(), "extra ? in text") {
+		t.Errorf("expected error for subquery")
+	}
+}
+
 func TestOptional(t *testing.T) {
 	sel := Optional("you should not see this")
 
