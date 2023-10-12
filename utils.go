@@ -99,9 +99,13 @@ func convertArg(text string, arg any) (string, []any, []error) {
 			newArgs = append(newArgs, nil)
 			return text, newArgs, errs
 		}
-		sql, params, _ := v.toSql()
+		sql, params, err := v.toSql()
 		text = strings.Replace(text, "?", sql, 1)
-		newArgs = append(newArgs, params...)
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			newArgs = append(newArgs, params...)
+		}
 
 	case JsonMap, JsonList:
 		text = strings.Replace(text, "?", paramPh, 1)
