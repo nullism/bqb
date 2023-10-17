@@ -1,6 +1,8 @@
 package bqb
 
 import (
+	"bufio"
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -8,22 +10,99 @@ import (
 )
 
 func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
-	if dialect == MYSQL || dialect == SQL {
-		sql = strings.ReplaceAll(sql, paramPh, "?")
-	}
-	for i, param := range params {
-		if dialect == RAW {
+	const (
+		questionMark                = "?"
+		doubleQuestionMarkDelimiter = "??"
+		parameterPlaceholder        = paramPh
+	)
+
+	switch dialect {
+	case RAW:
+		raws := make([]string, len(params))
+		for i, param := range params {
 			p, err := paramToRaw(param)
 			if err != nil {
 				return "", err
 			}
-			sql = strings.Replace(sql, paramPh, p, 1)
-		} else if dialect == PGSQL {
-			sql = strings.ReplaceAll(sql, "??", "?")
-			sql = strings.Replace(sql, paramPh, fmt.Sprintf("$%d", i+1), 1)
+			raws[i] = p
+		}
+
+		return scanReplace(sql, parameterPlaceholder, func(i int) string { return raws[i] })
+	case MYSQL, SQL:
+		return scanReplace(sql, parameterPlaceholder, func(i int) string { return questionMark })
+	case PGSQL:
+		// Replace "??" with "?"
+		updatedSQL, err := scanReplace(sql, doubleQuestionMarkDelimiter, func(i int) string { return questionMark })
+		if err != nil {
+			return "", err
+		}
+		sql = updatedSQL
+
+		// Replace parameter placeholder with "$1" style postgres values
+		updatedSQL, err = scanReplace(sql, parameterPlaceholder, func(i int) string { return fmt.Sprintf("$%d", i+1) })
+		if err != nil {
+			return "", err
+		}
+
+		return updatedSQL, nil
+	default:
+		// No replacement defined for dialect
+		return sql, nil
+	}
+}
+
+type replaceFn func(int) string
+
+func scanReplace(stmt string, replace string, fn replaceFn) (string, error) {
+	// Build a scanner that will iterate based on the replace token
+	ph := []byte(replace)
+	scanner := bufio.NewScanner(bytes.NewBufferString(stmt))
+	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		// Return nothing if at end of file and no data passed
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+
+		switch i := bytes.Index(data, ph); {
+		case i == 0:
+			return len(ph), data[0:len(ph)], nil
+		case i > 0:
+			return i, data[0:i], nil
+
+		}
+
+		// If at end of file with data return the data
+		if atEOF {
+			return len(data), data, nil
+		}
+
+		return
+	})
+
+	i := 0
+	sb := strings.Builder{}
+
+	// Scan replacing tokens with the value returned from delegate
+	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return "", err
+		}
+
+		switch txt := scanner.Text(); txt {
+		case replace:
+			if _, err := sb.WriteString(fn(i)); err != nil {
+				return "", err
+			}
+			i++
+
+		default:
+			if _, err := sb.WriteString(txt); err != nil {
+				return "", err
+			}
 		}
 	}
-	return sql, nil
+
+	return sb.String(), nil
 }
 
 func convertArg(text string, arg any) (string, []any, []error) {
