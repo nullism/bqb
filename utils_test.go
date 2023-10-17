@@ -122,6 +122,20 @@ func Test_scanReplace(t *testing.T) {
 				err: nil,
 			},
 		},
+		{
+			name: "several tokens",
+			args: args{
+				stmt:    fmt.Sprintf("%s%sthis tests %s%s the token %s%s", testReplace, testReplace, testReplace, testReplace, testReplace, testReplace),
+				replace: testReplace,
+				fn: func(i int) string {
+					return fmt.Sprintf("%v", i)
+				},
+			},
+			want: want{
+				str: "01this tests 23 the token 45",
+				err: nil,
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			str, err := scanReplace(tt.args.stmt, testReplace, tt.args.fn)
@@ -134,5 +148,21 @@ func Test_scanReplace(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func Test_dialectReplace_unknown_dialect(t *testing.T) {
+	const (
+		testSql = "test-sql"
+	)
+	params := []any{1, 2, "a", "c"}
+	sql, err := dialectReplace(Dialect("unknown"), testSql, params)
+
+	if sql != "test-sql" {
+		t.Errorf("unexpected sql statement: want %s got %s", testSql, sql)
+	}
+
+	if err != nil {
+		t.Error("unknown dialect should not return an error")
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -27,24 +28,21 @@ func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
 			raws[i] = p
 		}
 
-		return scanReplace(sql, parameterPlaceholder, func(i int) string { return raws[i] })
+		return replaceWithScans(
+			sql,
+			scan{pattern: parameterPlaceholder, fn: func(i int) string { return raws[i] }},
+		)
 	case MYSQL, SQL:
-		return scanReplace(sql, parameterPlaceholder, func(i int) string { return questionMark })
+		return replaceWithScans(
+			sql,
+			scan{pattern: parameterPlaceholder, fn: func(int) string { return questionMark }},
+		)
 	case PGSQL:
-		// Replace "??" with "?"
-		updatedSQL, err := scanReplace(sql, doubleQuestionMarkDelimiter, func(i int) string { return questionMark })
-		if err != nil {
-			return "", err
-		}
-		sql = updatedSQL
-
-		// Replace parameter placeholder with "$1" style postgres values
-		updatedSQL, err = scanReplace(sql, parameterPlaceholder, func(i int) string { return fmt.Sprintf("$%d", i+1) })
-		if err != nil {
-			return "", err
-		}
-
-		return updatedSQL, nil
+		return replaceWithScans(
+			sql,
+			scan{pattern: doubleQuestionMarkDelimiter, fn: func(int) string { return questionMark }},
+			scan{pattern: parameterPlaceholder, fn: func(i int) string { return fmt.Sprintf("$%d", i+1) }},
+		)
 	default:
 		// No replacement defined for dialect
 		return sql, nil
@@ -52,6 +50,23 @@ func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
 }
 
 type replaceFn func(int) string
+
+type scan struct {
+	pattern string
+	fn      replaceFn
+}
+
+// replaceWithScans applies the given set of scanning arguments and joins their
+// errors together.
+func replaceWithScans(in string, ss ...scan) (string, error) {
+	errs := []error{}
+	for _, s := range ss {
+		out, err := scanReplace(in, s.pattern, s.fn)
+		errs = append(errs, err)
+		in = out
+	}
+	return in, errors.Join(errs...)
+}
 
 func scanReplace(stmt string, replace string, fn replaceFn) (string, error) {
 	// Build a scanner that will iterate based on the replace token
@@ -80,29 +95,25 @@ func scanReplace(stmt string, replace string, fn replaceFn) (string, error) {
 	})
 
 	i := 0
-	sb := strings.Builder{}
 
 	// Scan replacing tokens with the value returned from delegate
+	sb := strings.Builder{}
 	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			return "", err
-		}
-
 		switch txt := scanner.Text(); txt {
 		case replace:
-			if _, err := sb.WriteString(fn(i)); err != nil {
-				return "", err
-			}
+			// String builder will always return nil for an err so it is thrown
+			// away.
+			_, _ = sb.WriteString(fn(i))
 			i++
 
 		default:
-			if _, err := sb.WriteString(txt); err != nil {
-				return "", err
-			}
+			// String builder will always return nil for an err so it is thrown
+			// away.
+			_, _ = sb.WriteString(txt)
 		}
 	}
 
-	return sb.String(), nil
+	return sb.String(), scanner.Err()
 }
 
 func convertArg(text string, arg any) (string, []any, []error) {
