@@ -454,10 +454,13 @@ func TestQuery_ToPgsql(t *testing.T) {
 	}
 
 	ql := New("? ?? ? ? ? ?", "a", "b", "c", "d", "e")
-	sql, _, _ = ql.ToPgsql()
+	sql, params, _ = ql.ToPgsql()
 	want = "$1 ? $2 $3 $4 $5"
 	if sql != want {
 		t.Errorf("got: %q, want: %q", sql, want)
+	}
+	if params[0] != "a" || params[len(params)-1] != "e" {
+		t.Errorf("params not matching: %v", params)
 	}
 
 	want = "SELECT * FROM foo"
@@ -687,11 +690,31 @@ func TestValuerError(t *testing.T) {
 	}
 }
 
+func Benchmark_ToMysql_Params(b *testing.B) {
+	parts := []string{}
+	args := []any{}
+	for j := 0; j < 10; j++ {
+		for j := 0; j < 1000; j++ {
+			parts = append(parts, "?")
+			args = append(args, 1)
+		}
+	}
+
+	query := fmt.Sprintf("(%s)", strings.Join(parts, ","))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _, err := New(query, args...).ToMysql()
+		if err != nil {
+			b.Fatalf("failed to make benchmark sql: %v", err)
+		}
+	}
+}
+
 func Benchmark_ToPgsql_Params(b *testing.B) {
 	parts := []string{}
 	args := []any{}
 	for j := 0; j < 10; j++ {
-		for j := 0; j < 400; j++ {
+		for j := 0; j < 1000; j++ {
 			parts = append(parts, "?")
 			args = append(args, 1)
 		}
@@ -707,7 +730,7 @@ func Benchmark_ToPgsql_Params(b *testing.B) {
 	}
 }
 
-func Benchmark_ToMysql_Params(b *testing.B) {
+func Benchmark_ToRaw_Params(b *testing.B) {
 	parts := []string{}
 	args := []any{}
 	for j := 0; j < 10; j++ {
@@ -720,7 +743,7 @@ func Benchmark_ToMysql_Params(b *testing.B) {
 	query := fmt.Sprintf("(%s)", strings.Join(parts, ","))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, err := New(query, args...).ToMysql()
+		_, err := New(query, args...).ToRaw()
 		if err != nil {
 			b.Fatalf("failed to make benchmark sql: %v", err)
 		}
