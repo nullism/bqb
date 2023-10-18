@@ -1,12 +1,10 @@
 package bqb
 
 import (
-	"bufio"
-	"bytes"
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -19,101 +17,29 @@ func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
 
 	switch dialect {
 	case RAW:
-		raws := make([]string, len(params))
-		for i, param := range params {
+		for _, param := range params {
 			p, err := paramToRaw(param)
 			if err != nil {
 				return "", err
 			}
-			raws[i] = p
+			sql = strings.Replace(sql, paramPh, p, 1)
 		}
-
-		return replaceWithScans(
-			sql,
-			scan{pattern: parameterPlaceholder, fn: func(i int) string { return raws[i] }},
-		)
+		return sql, nil
 	case MYSQL, SQL:
-		return replaceWithScans(
-			sql,
-			scan{pattern: parameterPlaceholder, fn: func(int) string { return questionMark }},
-		)
+		return strings.ReplaceAll(sql, paramPh, questionMark), nil
 	case PGSQL:
-		return replaceWithScans(
-			sql,
-			scan{pattern: doubleQuestionMarkDelimiter, fn: func(int) string { return questionMark }},
-			scan{pattern: parameterPlaceholder, fn: func(i int) string { return fmt.Sprintf("$%d", i+1) }},
-		)
+		sql = strings.ReplaceAll(sql, doubleQuestionMarkDelimiter, questionMark)
+		parts := strings.Split(sql, paramPh)
+		var builder strings.Builder
+		for i := range params {
+			_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
+		}
+		builder.WriteString(parts[len(parts)-1])
+		return builder.String(), nil
 	default:
 		// No replacement defined for dialect
 		return sql, nil
 	}
-}
-
-type replaceFn func(int) string
-
-type scan struct {
-	pattern string
-	fn      replaceFn
-}
-
-// replaceWithScans applies the given set of scanning arguments and joins their
-// errors together.
-func replaceWithScans(in string, ss ...scan) (string, error) {
-	errs := []error{}
-	for _, s := range ss {
-		out, err := scanReplace(in, s.pattern, s.fn)
-		errs = append(errs, err)
-		in = out
-	}
-	return in, errors.Join(errs...)
-}
-
-func scanReplace(stmt string, replace string, fn replaceFn) (string, error) {
-	// Build a scanner that will iterate based on the replace token
-	ph := []byte(replace)
-	scanner := bufio.NewScanner(bytes.NewBufferString(stmt))
-	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		// Return nothing if at end of file and no data passed
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-
-		switch i := bytes.Index(data, ph); {
-		case i == 0:
-			return len(ph), data[0:len(ph)], nil
-		case i > 0:
-			return i, data[0:i], nil
-
-		}
-
-		// If at end of file with data return the data
-		if atEOF {
-			return len(data), data, nil
-		}
-
-		return
-	})
-
-	i := 0
-
-	// Scan replacing tokens with the value returned from delegate
-	sb := strings.Builder{}
-	for scanner.Scan() {
-		switch txt := scanner.Text(); txt {
-		case replace:
-			// String builder will always return nil for an err so it is thrown
-			// away.
-			_, _ = sb.WriteString(fn(i))
-			i++
-
-		default:
-			// String builder will always return nil for an err so it is thrown
-			// away.
-			_, _ = sb.WriteString(txt)
-		}
-	}
-
-	return sb.String(), scanner.Err()
 }
 
 func convertArg(text string, arg any) (string, []any, []error) {
