@@ -669,3 +669,23 @@ func TestValuerError(t *testing.T) {
 		t.Errorf("got: %q, want: %q", err, wantError)
 	}
 }
+
+func Benchmark_ToPgsql_Params(b *testing.B) {
+	parts := []string{}
+	args := []any{}
+	for j := 0; j < 10; j++ {
+		for j := 0; j < 1000; j++ {
+			parts = append(parts, "?")
+			args = append(args, 1)
+		}
+	}
+
+	query := fmt.Sprintf("(%s)", strings.Join(parts, ","))
+
+	for i := 0; i < b.N; i++ {
+		_, _, err := New(query, args...).ToPgsql()
+		if err != nil {
+			b.Fatalf("failed to make benchmark sql: %v", err)
+		}
+	}
+}
