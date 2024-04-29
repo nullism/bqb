@@ -557,6 +557,19 @@ func TestQueryLiteralQ(t *testing.T) {
 	}
 }
 
+func TestQueryLiteralQWrapped(t *testing.T) {
+	q := New("WHERE ??| = ?", "asdf")
+	wrapped := New("?", q)
+	sql, _, err := wrapped.ToPgsql()
+	if err != nil {
+		t.Errorf("got error from ToPgsql(): %v", err)
+	}
+	want := "WHERE ?| = $1"
+	if want != sql {
+		t.Errorf("got: %q, want:%q", sql, want)
+	}
+}
+
 func TestQueryNil(t *testing.T) {
 	var q *Query
 	q2 := New("test ?", q)
