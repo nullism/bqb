@@ -179,7 +179,7 @@ func makePart(text string, args ...any) QueryPart {
 			errs = append(errs, argErrs...)
 		}
 		newArgs = append(newArgs, fArgs...)
-		text = argText
+		text = strings.ReplaceAll(argText, "??", tempPh)
 	}
 
 	if err := checkParamCounts(text, originalText, newArgs); err != nil {
