@@ -35,6 +35,28 @@ SELECT * FROM places WHERE id = ?
 PARAMS: [1234]
 ```
 
+### Escaping `?`
+
+Use the double question mark `??` value to escape the `?` in Postgres queries.
+For example:
+
+```golang
+q := bqb.New("SELECT * FROM places WHERE json_obj_column ?? 'key'")
+sql, params, err := q.ToPgsql()
+```
+
+This query uses the `?` operator for jsonb types in Postgres to test an object
+for the presence of a key. It should not be interpreted as an escaped value by
+bqb.
+
+```sql
+SELECT * FROM places WHERE json_obj_column ? 'key'
+```
+
+```
+PARAMS: []
+```
+
 ## Postgres - ToPgsql()
 
 Just call the `ToPgsql()` method instead of `ToSql()` to convert the query to Postgres syntax
