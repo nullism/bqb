@@ -144,6 +144,10 @@ func convertArg(text string, arg any) (string, []any, []error) {
 	case Embedded:
 		text = strings.Replace(text, "?", string(v), 1)
 
+	case Folded, *Folded:
+		text = strings.Replace(text, "?", paramPh, 1)
+		newArgs = append(newArgs, v)
+
 	default:
 		text = strings.Replace(text, "?", paramPh, 1)
 		newArgs = append(newArgs, v)

@@ -29,8 +29,21 @@ type Embedder interface {
 
 // JsonMap is a custom type which tells bqb to convert the parameter to
 // a JSON object without requiring reflection.
-type JsonMap map[string]interface{}
+type JsonMap map[string]any
 
 // JsonList is a type that tells bqb to convert the parameter to a JSON
 // list without requiring reflection.
-type JsonList []interface{}
+type JsonList []any
+
+// Folded is a type that tells bqb to NOT spread the list into individual
+// parameters.
+type Folded []any
+
+// ToFolded converts a slice to a ValueArray.
+func ToFolded[T any](slice []T) Folded {
+	valueArr := make(Folded, len(slice))
+	for i, v := range slice {
+		valueArr[i] = v
+	}
+	return valueArr
+}

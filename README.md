@@ -128,14 +128,25 @@ This can be useful for changing sort direction or embedding table and column nam
 
 _Note: Since this is a raw value, special attention should be paid to ensure user-input is checked and sanitized._
 
+### Folded
+
+The `Folded` type and corresponding `ToFolded` generic function will prevent spreading of `[]string`, `[]int`, or `[]any`. For example, `bqb.New("?", []string{"a","b"})` will become `("?,?", "a", "b")` by default.
+
+```go
+strns := []string{"a", "b"}
+q := bqb.New("Folded: ? - Default: ?", bqb.ToFolded(strns), strns)
+// sql = Folded: ? - Default: ?,?
+// params = { []string{"a", "b"}, "a", "b" }
+```
+
 ## Query IN
 
-Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, or `[]interface{}` are automatically expanded.
+Arguments of type `[]string`,`[]*string`, `[]int`,`[]*int`, and `[]any` / `[]interface{}` are automatically expanded.
 
 ```golang
     q := bqb.New(
         "strs:(?) *strs:(?) ints:(?) *ints:(?) intfs:(?)",
-        []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{}, []interface{}{3, true},
+        []string{"a", "b"}, []*string{}, []int{1, 2}, []*int{}, []any{3, true},
     )
     sql, params, _ := q.ToSql()
 ```
@@ -197,7 +208,7 @@ SELECT id,age,email
 ### Advanced Example
 
 The `Optional(string)` function returns a query that resolves to an empty string if no query parts have
-been added via methods on the query instance, and joins with a space to the next query part. 
+been added via methods on the query instance, and joins with a space to the next query part.
 For example `q := Optional("SELECT")` will resolve to an empty string unless parts have been added by one of the methods,
 e.g `q.Space("* FROM my_table")` would make `q.ToSql()` resolve to `SELECT * FROM my_table`.
 
