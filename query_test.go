@@ -9,18 +9,43 @@ import (
 	"time"
 )
 
-func TestA(t *testing.T) {
-}
+func TestFolded(t *testing.T) {
+	valArr := ToFolded([]string{"a", "b", "c"})
+	wantValArr := Folded{"a", "b", "c"}
 
-func TestArrays(t *testing.T) {
-	q := New("(?) (?) (?) (?) (?)", []string{"a", "b"}, []string{}, []*string{}, []int{1, 2}, []*int{})
-	sql, params, _ := q.ToSql()
+	if valArr[0] != wantValArr[0] {
+		t.Errorf("got: %v, want: %v", valArr[0], wantValArr[0])
+	}
+
+	jsArr := JsonList{"a", "b", "c"}
+	fpArr := &Folded{"a", "b", "c"}
+
+	q := New("(?) (?) (?) (?)", valArr, jsArr, []string{"a", "b", "c"}, fpArr)
+	sql, params, err := q.ToSql()
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
 
 	if len(params) != 6 {
 		t.Errorf("invalid params")
 	}
 
-	want := "(?,?) () (?) (?,?) (?)"
+	want := "(?) (?) (?,?,?) (?)"
+	if sql != want {
+		t.Errorf("got: %q, want: %q", sql, want)
+	}
+}
+
+func TestArrays(t *testing.T) {
+	// float64 does not expand automatically
+	q := New("(?) (?) (?) (?) (?) (?) (?)", []string{"a", "b"}, []string{}, []*string{}, []int{1, 2}, []*int{}, []any{1.2, 1.3, 1.4}, []float64{1.1, 1.2})
+	sql, params, _ := q.ToSql()
+
+	if len(params) != 10 {
+		t.Errorf("invalid params")
+	}
+
+	want := "(?,?) () (?) (?,?) (?) (?,?,?) (?)"
 	if sql != want {
 		t.Errorf("got: %q, want: %q", sql, want)
 	}
